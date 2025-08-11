@@ -28,7 +28,4 @@ class Config(BaseSettings):
     def load(cls) -> Self:
         return cls()
 
-
 config = Config.load()
-
-print(config.telegram.bot_token.get_secret_value())
