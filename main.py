@@ -1,9 +1,11 @@
-from aiogram import Dispatcher, Bot
 import asyncio
 
+from aiogram import Bot, Dispatcher
+
 from settings.main import config
-from src.utils.startup import startup
 from src.utils.shutdown import shutdown
+from src.utils.startup import startup
+
 
 async def main() -> None:
     bot = Bot(token=config.telegram.bot_token.get_secret_value())

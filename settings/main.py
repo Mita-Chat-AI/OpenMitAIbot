@@ -2,6 +2,7 @@ from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing_extensions import Self
 
+
 class BaseConfig(BaseSettings):
     model_config = SettingsConfigDict(
         env_file='settings/.env',
