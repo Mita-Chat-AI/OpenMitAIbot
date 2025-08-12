@@ -10,15 +10,19 @@ from loguru import logger
 async def load_routers() -> List[Router]:
     routers = []
     base_path = Path(__file__).parent
+    root = base_path.parent.parent.parent.resolve()
+    print(base_path)
+    print(root)
 
-    sys.path.append(str(base_path.parent.parent))
+    if str(root) not in sys.path:
+        sys.path.insert(0, str(root))
 
     for file in base_path.rglob("*.py"):
         if file.name == "__init__.py":
             continue
 
         name = (
-            file.relative_to(base_path.parent.parent)
+            file.relative_to(root)
             .with_suffix("")
             .as_posix()
             .replace("/", ".")

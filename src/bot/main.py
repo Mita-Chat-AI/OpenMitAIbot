@@ -2,10 +2,10 @@ import asyncio
 
 from aiogram import Bot, Dispatcher
 
-from settings.main import config
-from src.handlers import load_routers
-from src.utils.shutdown import shutdown
-from src.utils.startup import startup
+from ..settings.main import config
+from .handlers import load_routers
+from .utils.shutdown import shutdown
+from .utils.startup import startup
 
 
 async def main() -> None:
@@ -30,4 +30,3 @@ async def main() -> None:
     finally:
         await bot.session.close()
 
-asyncio.run(main())

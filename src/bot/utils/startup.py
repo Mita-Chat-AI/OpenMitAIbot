@@ -1,4 +1,4 @@
-from settings.main import config
+from ...settings.main import config
 
 
 async def startup(bot):

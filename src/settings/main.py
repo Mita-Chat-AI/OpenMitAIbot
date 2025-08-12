@@ -1,11 +1,14 @@
+from pathlib import Path
+
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing_extensions import Self
 
+print(f'{Path(__file__).parents[2]}/.env')
 
 class BaseConfig(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file='settings/.env',
+        env_file=f'{Path(__file__).parents[2]}/.env',
         env_file_encoding='utf-8',
         extra='ignore'
     )
