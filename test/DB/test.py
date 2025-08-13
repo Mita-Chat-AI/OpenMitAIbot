@@ -14,7 +14,7 @@ class Category(BaseModel):
 class Product(Document):
     name: str                          # You can use normal types just like in pydantic
     description: Optional[str] = None
-    price: Indexed[float]              # You can also specify that a field should correspond to an index
+    price: float           # You can also specify that a field should correspond to an index
     category: Category                 # You can include pydantic models as well
 
 
@@ -49,11 +49,13 @@ async def example():
     await init_beanie(database=client.db_name, document_models=[Product])
 
 
-    product_id = await Product.find_one(
-        Product.id == ObjectId("689b9775793001f53ead2b94")
-    )
 
-    print(product_id)
+        # Найти все документы
+    products_cursor = Product.find_all()  # или любой фильтр
+    products = await products_cursor.to_list()  # конвертируем в список
+
+    print(products)
+
 
 if __name__ == "__main__":
     asyncio.run(example())

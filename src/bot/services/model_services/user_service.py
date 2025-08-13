@@ -1,12 +1,14 @@
 import html
 from typing import Optional, Union
 
+from aiogram.types.chat_member_updated import ChatMemberUpdated
+from aiogram.types.user import User as TelegramUser
+from aiogram_i18n.managers import BaseManager
+
 from ...db.models import User
 from ...repositories import UserRepository
 from ..service import Service
 
-from aiogram_i18n.managers import BaseManager
-from aiogram.types.user import User as TelegramUser
 
 class UserService(Service):
 
@@ -54,6 +56,11 @@ class UserService(Service):
         
         else:
             return name
+        
+
+    async def get_env():
+        from settings import config
+        return config
 
     class UserManager(BaseManager):
         def __init__(self, user_repository: UserRepository):
@@ -62,15 +69,23 @@ class UserService(Service):
 
         async def get_locale(
                 self,
-                event_from_user: TelegramUser
+                event: ChatMemberUpdated
         ) -> str:
-            user = await self.user_repository.select(event_from_user.id)
-            return user.settings.locale if user else "ru"
-
+            if hasattr(event, "from_user") and event.from_user:
+                tg_user: TelegramUser = event.from_user
+            else:
+                tg_user = None
+            
+            if tg_user:
+                user = await self.user_repository.select(user_id=tg_user.id)
+                return user.settings.locale if user else "ru"
+            return "ru"
+    
         async def set_locale(
                 self,
                 locale: str,
-                event_from_user: TelegramUser
+                event: ChatMemberUpdated
         ) -> None:
-            await self.user_repository.update_locale(event_from_user.id, locale)
-
+            if hasattr(event, "from_user") and event.from_user:
+                tg_user: TelegramUser = event.from_user
+                await self.user_repository.update_locale(tg_user.id, locale)

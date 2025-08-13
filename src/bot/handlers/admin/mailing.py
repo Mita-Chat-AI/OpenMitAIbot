@@ -1,0 +1,31 @@
+
+
+from aiogram import Bot, F, Router
+from aiogram.types.chat_member_updated import ChatMemberUpdated
+from dependency_injector.wiring import Provide, inject
+
+from ...containers import Container
+from ...services import UserService
+
+router = Router(name=__name__)
+
+@router.channel_post(F.chat.id == -1002453540085)
+@inject
+async def mailing_channel_post(
+    post: ChatMemberUpdated,
+    bot: Bot,
+    user_service: UserService = Provide[
+        Container.user_service
+    ]
+) -> None:
+    tg_ids = [479611586] # заменить на user_service.get_users
+
+    for user_id in tg_ids:
+        try:
+            await bot.copy_message(
+                chat_id=user_id,
+                from_chat_id=post.chat.id,
+                message_id=post.message_id
+            )
+        except Exception as e:
+            print(f"Ошибка при рассылке {user_id}: {e}")

@@ -1,6 +1,8 @@
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums.parse_mode import ParseMode
+from aiogram_i18n import I18nMiddleware
+from aiogram_i18n.cores.fluent_runtime_core import FluentRuntimeCore
 
 from ..settings.main import config
 from .containers import Container
@@ -9,9 +11,6 @@ from .handlers import load_routers
 from .utils.shutdown import shutdown
 from .utils.startup import startup
 
-
-from aiogram_i18n import I18nMiddleware
-from aiogram_i18n.cores.fluent_runtime_core import FluentRuntimeCore
 
 async def main() -> None:
     bot = Bot(

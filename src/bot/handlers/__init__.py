@@ -11,8 +11,6 @@ async def load_routers() -> List[Router]:
     routers = []
     base_path = Path(__file__).parent
     root = base_path.parent.parent.parent.resolve()
-    print(base_path)
-    print(root)
 
     if str(root) not in sys.path:
         sys.path.insert(0, str(root))
