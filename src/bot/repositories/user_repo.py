@@ -11,44 +11,30 @@ from ..db.models import User
 class UserRepository:
     async def upsert(
         self,
-        telegram_id: int,
-        first_name: str,
-        last_name: Optional[str] = None,
-        username: Optional[str] = None,
+        user_id: int,
+
     ) -> User:
-        user = await User.find_one(User.telegram_id == telegram_id)
+        user = await User.find_one(User.user_id == user_id)
 
         if not user:
             user = User(
-                telegram_id=telegram_id,
-                first_name=first_name,
-                last_name=last_name,
-                username=username,
+                user_id=user_id
             )
             await user.insert()
-        else:
-            user.first_name = first_name
-            user.last_name = last_name
-            user.username = username
-            await user.save()
 
         return user
 
     async def select(
         self,
-        telegram_id: Optional[int] = None,
+        user_id: Optional[int] = None,
         id: Optional[str] = None,
-        username: Optional[str] = None
     ) -> Optional[User]:
 
-        if telegram_id:
-            return await User.find_one(User.telegram_id == telegram_id)
+        if user_id:
+            return await User.find_one(User.user_id == user_id)
 
         elif id:
             return await User.get(id)
-
-        elif username:
-            return await User.find_one(User.username == username)
 
         else:
             raise ValueError("Не был передан ни один аргумент")

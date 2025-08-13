@@ -3,7 +3,7 @@ from typing import Optional, Union
 
 from ...db.models import User
 from ...repositories import UserRepository
-from .. import Service
+from ..service import Service
 
 
 class UserService(Service):
@@ -21,19 +21,15 @@ class UserService(Service):
     ) -> User:
         user: User | None = None
 
-        if isinstance(search_argument, str):
-            user = await self.user_repository.select(username=search_argument)
-
-        elif search_argument >= 777000:
-            user = await self.user_repository.select(telegram_id=search_argument)
+        if search_argument >= 777000:
+            user = await self.user_repository.select(user_id=search_argument)
 
         else:
             user = await self.user_repository.select(id=search_argument)
 
         if not user and isinstance(search_argument, int):
             user = await self.user_repository.upsert(
-                telegram_id=search_argument,
-                first_name="Unknown"  # Можно брать из message.from_user.first_name
+                user_id=search_argument,
             )
 
         self.data = user
