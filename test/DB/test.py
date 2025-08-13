@@ -1,10 +1,9 @@
 import asyncio
 from typing import Optional
 
-from pymongo import AsyncMongoClient
-from pydantic import BaseModel
-
 from beanie import Document, Indexed, init_beanie
+from pydantic import BaseModel
+from pymongo import AsyncMongoClient
 
 
 class Category(BaseModel):
@@ -40,6 +39,7 @@ async def _example():
     await product.set({Product.name:"Gold bar"})
 
 from bson import ObjectId
+
 
 async def example():
     client = AsyncMongoClient(

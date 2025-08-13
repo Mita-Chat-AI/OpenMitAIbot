@@ -6,7 +6,7 @@ from ..settings.main import config
 from .handlers import load_routers
 from .utils.shutdown import shutdown
 from .utils.startup import startup
-
+from .db.connection import init_db
 
 async def main() -> None:
     bot = Bot(
@@ -17,7 +17,16 @@ async def main() -> None:
     @dp.startup()
     async def on_startup():
         await startup(bot)
+        
 
+
+    from .containers import Container
+
+    container = Container(bot=bot)
+    container.wire(
+        modules=[__name__], packages=['.handlers']
+    )
+    await init_db()
     for router in await load_routers():
         dp.include_routers(router)
 
