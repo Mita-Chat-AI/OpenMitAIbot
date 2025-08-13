@@ -1,9 +1,11 @@
 from typing import Optional
+
 from beanie import Document
 from pydantic import Field
-# from ..exceptions import RecordNotFoundError, SelectError
 
 from ..db.models import User
+
+# from ..exceptions import RecordNotFoundError, SelectError
 
 
 class UserRepository:
@@ -31,7 +33,6 @@ class UserRepository:
             await user.save()
 
         return user
-
 
     async def select(
         self,

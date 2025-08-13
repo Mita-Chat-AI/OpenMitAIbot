@@ -3,10 +3,11 @@ import asyncio
 from aiogram import Bot, Dispatcher
 
 from ..settings.main import config
+from .db.connection import init_db
 from .handlers import load_routers
 from .utils.shutdown import shutdown
 from .utils.startup import startup
-from .db.connection import init_db
+
 
 async def main() -> None:
     bot = Bot(

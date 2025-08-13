@@ -1,9 +1,11 @@
 from contextvars import ContextVar
-from dependency_injector import containers, providers
+
 from aiogram import Bot
+from dependency_injector import containers, providers
 
 from .repositories import UserRepository
 from .services import UserService
+
 
 class Container(containers.DeclarativeContainer):
     config = providers.Configuration()

@@ -1,13 +1,11 @@
 from aiogram import Router
-from aiogram.types import Message 
-from aiogram.filters import CommandStart 
-from dependency_injector.wiring import inject, Provide 
+from aiogram.filters import CommandStart
+from aiogram.types import Message
+from dependency_injector.wiring import Provide, inject
+
 from ..containers import Container
 from ..db.models import User
 from ..services import UserService
-
-
-
 
 router = Router(name=__name__)
 

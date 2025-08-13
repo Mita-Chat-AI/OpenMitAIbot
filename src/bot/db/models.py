@@ -1,9 +1,8 @@
 from enum import Enum
 from typing import List, Optional, Pattern, Type
 
-from beanie import Document
+from beanie import Document, Indexed
 from pydantic import BaseModel, Field, constr, field_validator
-
 
 # # 🎙️ Голоса
 # class VoicePerson(str, Enum):
@@ -103,15 +102,8 @@ from pydantic import BaseModel, Field, constr, field_validator
 # #     asyncio.run(main())
 
 
-from beanie import Document, Indexed
-from pydantic import Field
-from typing import Optional
 
-from beanie import Document, Indexed
-from typing import Optional
 
-from beanie import Document, Indexed
-from typing import Optional
 
 class User(Document):
     telegram_id: Indexed(int)  # убрал unique=True

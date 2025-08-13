@@ -1,9 +1,10 @@
-from .. import Service 
+import html
+from typing import Optional, Union
+
 from ...db.models import User
 from ...repositories import UserRepository
-from typing import Union, Optional
+from .. import Service
 
-import html
 
 class UserService(Service):
 

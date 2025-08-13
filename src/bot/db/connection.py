@@ -1,6 +1,8 @@
-from pymongo import AsyncMongoClient
 from beanie import init_beanie
+from pymongo import AsyncMongoClient
+
 from .models import User
+
 
 async def init_db():
     client = AsyncMongoClient("mongodb://localhost:27017")
