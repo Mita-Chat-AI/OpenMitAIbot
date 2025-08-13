@@ -5,6 +5,8 @@ from ...db.models import User
 from ...repositories import UserRepository
 from ..service import Service
 
+from aiogram_i18n.managers import BaseManager
+from aiogram.types.user import User as TelegramUser
 
 class UserService(Service):
 
@@ -35,8 +37,6 @@ class UserService(Service):
         self.data = user
         return user
 
-    
-    
     def create_link(
         self,
         name: str,
@@ -54,3 +54,23 @@ class UserService(Service):
         
         else:
             return name
+
+    class UserManager(BaseManager):
+        def __init__(self, user_repository: UserRepository):
+            super().__init__()
+            self.user_repository = user_repository
+
+        async def get_locale(
+                self,
+                event_from_user: TelegramUser
+        ) -> str:
+            user = await self.user_repository.select(event_from_user.id)
+            return user.settings.locale if user else "ru"
+
+        async def set_locale(
+                self,
+                locale: str,
+                event_from_user: TelegramUser
+        ) -> None:
+            await self.user_repository.update_locale(event_from_user.id, locale)
+

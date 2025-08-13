@@ -1,8 +1,9 @@
 from enum import Enum
 from typing import List, Optional, Pattern, Type
 
-from beanie import Document, Indexed
+from beanie import Document
 from pydantic import BaseModel, Field, constr, field_validator
+
 
 # 🎙️ Голоса
 class VoicePerson(str, Enum):
@@ -16,7 +17,7 @@ class UserSettings(BaseModel):
     is_blocked: bool = False
     is_history: bool = True
     voice_mode: bool = False
-    lang: str = Field(
+    locale: str = Field(
         default="ru"
     )
     voice_engine: int = Field(

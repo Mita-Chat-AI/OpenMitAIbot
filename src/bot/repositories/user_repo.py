@@ -4,6 +4,7 @@ from beanie import Document
 from pydantic import Field
 
 from ..db.models import User
+from ..exeptions import SelectError
 
 # from ..exceptions import RecordNotFoundError, SelectError
 
@@ -37,4 +38,17 @@ class UserRepository:
             return await User.get(id)
 
         else:
-            raise ValueError("Не был передан ни один аргумент")
+            raise SelectError("Не был передан ни один аргумент")
+        
+    async def update_locale(
+        self,
+        user_id: int,
+        locale: str
+    ) -> Optional[User]:
+        user = await User.find_one(User.user_id == user_id)
+        if not user:
+            raise SelectError(f"Пользователь с user_id={user_id} не найден")
+
+        user.locale = locale
+        await user.save()
+        return user

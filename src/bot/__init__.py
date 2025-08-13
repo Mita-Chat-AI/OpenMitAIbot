@@ -1,5 +1,5 @@
 import asyncio
 
-from .main import main
+from .__main__ import main
 
 asyncio.run(main())
