@@ -4,7 +4,6 @@ from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing_extensions import Self
 
-print(f'{Path(__file__).parents[2]}/.env')
 
 class BaseConfig(BaseSettings):
     model_config = SettingsConfigDict(
@@ -22,10 +21,19 @@ class AiogramConfig(BaseConfig):
     bot_token: SecretStr
     owner_id: int
 
+class VoiceConfig(BaseConfig):
+    model_config = SettingsConfigDict(
+        env_prefix="api_"
+    )
+
+    edge_tts: SecretStr
 
 class Config(BaseSettings):
     telegram: AiogramConfig = Field(
         default_factory=AiogramConfig
+    )
+    voice_config: VoiceConfig = Field(
+        default_factory=VoiceConfig
     )
 
     @classmethod

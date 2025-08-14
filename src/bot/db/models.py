@@ -5,9 +5,24 @@ from beanie import Document
 from pydantic import BaseModel, Field, constr, field_validator
 
 
+class Edge_TTS(BaseModel):
+    person: Optional[str] = Field(
+        default='CrazyMita'
+    )
+    rate: Optional[str] = Field(
+        default="+10%"
+    )
+    pith: Optional[int] = Field(
+        default=8
+    )
+
+
 # 🎙️ Голоса
-class VoicePerson(str, Enum):
-    CRAZYMITA = "CrazyMita"
+class VoiceSettings(BaseModel):
+    edge_tts: Edge_TTS = Field(
+        default_factory=Edge_TTS
+    )
+
 
 
 class UserSettings(BaseModel):
@@ -23,7 +38,6 @@ class UserSettings(BaseModel):
     voice_engine: int = Field(
         default=1
     )
-    person_voice: VoicePerson = VoicePerson.CRAZYMITA
     subscribe: int = Field(
         default=0
     )
@@ -63,9 +77,13 @@ class User(Document):
     settings: UserSettings = Field(
         default_factory=UserSettings
     )
+    voice_settings: VoiceSettings = Field(
+        default_factory=VoiceSettings
+    )
     statistics: Statistics = Field(
         default_factory=Statistics
     )
+    
 
     class Settings:
         name = "users"

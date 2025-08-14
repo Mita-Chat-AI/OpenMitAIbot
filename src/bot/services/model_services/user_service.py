@@ -8,7 +8,18 @@ from aiogram_i18n.managers import BaseManager
 from ...db.models import User
 from ...repositories import UserRepository
 from ..service import Service
+import requests
+from io import BytesIO
 
+from ....settings import config
+
+import aiohttp
+
+from io import BytesIO
+import numpy as np
+import requests
+import soundfile as sf
+from pedalboard import Pedalboard, Reverb
 
 class UserService(Service):
 
@@ -18,6 +29,7 @@ class UserService(Service):
         super().__init__()
         self.user_repository = user_repository
         self.data = None
+        self.config = self.get_env()
 
     async def get_data(
         self,
@@ -57,10 +69,61 @@ class UserService(Service):
         else:
             return name
         
-
-    async def get_env():
-        from settings import config
+    def get_env(self):
         return config
+
+
+    async def edge_voice_generate(
+            self, user_id: int,
+            text: str
+    ) -> bytes:
+        self.logger.info(f"Попытка записи голосового сообщения для {user_id} : {text}")
+
+        user = await self.get_data(search_argument=user_id)
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    url=self.config.voice_config.edge_tts.get_secret_value(),
+                    json={
+                        "text": text,
+                        "person": user.voice_settings.edge_tts.person,
+                        "rate": user.voice_settings.edge_tts.rate,
+                        "pith": user.voice_settings.edge_tts.pith
+                    },
+                    headers={
+                        'Content-type': 'application/json'
+                    }
+                ) as response:
+
+                    response.status
+                    voice_bytes = await response.read()
+                    self.logger.success(f"Удалось записать голосовое для {user_id}")
+        except Exception as e:
+            self.logger.error(f"Не удалось записать голосовое для {user_id} : {e}")
+            return None
+        
+        return await self.apply_voice_effect(voice_bytes)
+
+    async def apply_voice_effect(
+            self,
+            voice_bytes: bytes
+        ) -> bytes:
+        self.logger.info("Попытка применения эффека для голосового")
+        audio_buffer = BytesIO(voice_bytes)
+        samples, samplerate = sf.read(audio_buffer, dtype='float32')
+
+        samples += np.random.normal(0, 0.00005, samples.shape).astype(np.float32)
+
+        board = Pedalboard([Reverb(room_size=0.01, damping=0.8, wet_level=0.1)])
+        processed = board(samples, samplerate)
+
+        out_buffer = BytesIO()
+        sf.write(out_buffer, processed, samplerate, format='OGG', subtype='VORBIS')
+        out_buffer.seek(0)
+        self.logger.success("Эффект для голосового, был применен успешно")
+        return out_buffer.read()
+
 
     class UserManager(BaseManager):
         def __init__(self, user_repository: UserRepository):
@@ -78,8 +141,8 @@ class UserService(Service):
             
             if tg_user:
                 user = await self.user_repository.select(user_id=tg_user.id)
-                return user.settings.locale if user else "ru"
-            return "ru"
+                return user.settings.locale if user else self.default_locale
+            return self.default_locale
     
         async def set_locale(
                 self,
