@@ -10,7 +10,7 @@ from .db.connection import init_db
 from .handlers import load_routers
 from .utils.shutdown import shutdown
 from .utils.startup import startup
-
+from .middlewire.i18nsafemiddleware import I18nSafeMiddleware
 
 async def main() -> None:
     bot = Bot(
@@ -51,7 +51,13 @@ async def main() -> None:
 
 
 
+
+
+    # 1. Сначала подключаем i18n
     i18n_middleware.setup(dispatcher=dp)
+
+    # 2. Потом SafeMiddleware, чтобы ловил все KeyNotFoundError уже от i18n
+    dp.update.outer_middleware.register(I18nSafeMiddleware())
 
     @dp.shutdown()
     async def on_shutdown():

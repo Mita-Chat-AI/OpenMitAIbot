@@ -4,8 +4,11 @@ from aiogram.types import Message, BufferedInputFile
 from dependency_injector.wiring import Provide, inject
 from aiogram.enums import ChatAction
 from ...containers import Container
-import requests
 from ...services import UserService
+
+
+from aiogram_i18n import I18nContext
+
 router = Router(name=__name__)
 
 
@@ -16,6 +19,7 @@ router = Router(name=__name__)
 async def voice(
     message: Message,
     bot: Bot,
+    i18n: I18nContext,
     command: CommandObject,
     user_service: UserService = Provide[
         Container.user_service
@@ -25,11 +29,13 @@ async def voice(
 
     if not args:
         await message.reply(
-            text="Не правильно. Нужно /voice текст"
+            text=i18n.get("voice_missing_text")
         )
         return
     
-    await message.reply("Ждем гс. генерирую")
+    await message.reply(
+        text=i18n.get("voice_waiting")
+    )
 
     await bot.send_chat_action(
         chat_id=message.chat.id,
@@ -44,7 +50,9 @@ async def voice(
 
 
     if not voice_buffer:
-        await message.reply("Не удалось сгенерировать голосовое.")
+        await message.reply(
+            text=i18n.get("voice_failed")
+        )
         return
 
     await message.reply_voice(
