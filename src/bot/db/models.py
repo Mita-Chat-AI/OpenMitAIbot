@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Optional, Pattern, Type
+from typing import List, Optional, Type
 
 from beanie import Document
 from pydantic import BaseModel, Field, constr, field_validator
@@ -17,12 +17,10 @@ class Edge_TTS(BaseModel):
     )
 
 
-# 🎙️ Голоса
 class VoiceSettings(BaseModel):
     edge_tts: Edge_TTS = Field(
         default_factory=Edge_TTS
     )
-
 
 
 class UserSettings(BaseModel):

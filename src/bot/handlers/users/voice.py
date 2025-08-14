@@ -5,13 +5,12 @@ from dependency_injector.wiring import Provide, inject
 from aiogram.enums import ChatAction
 from ...containers import Container
 from ...services import UserService
+from aiogram_i18n import I18nContext, LazyProxy
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram_i18n.types import InlineKeyboardButton
 
-
-from aiogram_i18n import I18nContext
 
 router = Router(name=__name__)
-
-
 
 
 @router.message(Command("voice"))
@@ -48,17 +47,31 @@ async def voice(
     )
     
 
-
     if not voice_buffer:
         await message.reply(
             text=i18n.get("voice_failed")
         )
         return
+    
+    await bot.send_chat_action(
+        chat_id=message.chat.id,
+        action=ChatAction.UPLOAD_VOICE
+    )
+
+    kb = InlineKeyboardBuilder()
+    kb.add(
+        InlineKeyboardButton(
+            text=LazyProxy("voice_send_channel"),
+            callback_data="send_voice_channel"
+        )
+    )
 
     await message.reply_voice(
         voice=BufferedInputFile(
             file=voice_buffer,
-            filename='voice.mp3'
-        )
+            filename='voice.mp3',
+        ),
+        reply_markup=kb.as_markup()
+
     )
 
