@@ -4,7 +4,8 @@ from typing import List, Optional, Type
 from beanie import Document
 from pydantic import BaseModel, Field, constr, field_validator
 
-
+import re
+from typing import Pattern
 class Edge_TTS(BaseModel):
     person: Optional[str] = Field(
         default='CrazyMita'

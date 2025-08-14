@@ -96,7 +96,10 @@ class UserService(Service):
                     }
                 ) as response:
 
-                    response.status
+                    if response.status != 200:
+                        self.logger.error(f"{await response.text()}")
+                        return None
+
                     voice_bytes = await response.read()
                     self.logger.success(f"Удалось записать голосовое для {user_id}")
         except Exception as e:
