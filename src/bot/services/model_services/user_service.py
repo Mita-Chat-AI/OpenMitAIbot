@@ -1,25 +1,21 @@
 import html
+from io import BytesIO
 from typing import Optional, Union
 
-from aiogram.types.chat_member_updated import ChatMemberUpdated
-from aiogram.types.user import User as TelegramUser
-from aiogram_i18n.managers import BaseManager
-
-from ...db.models import User
-from ...repositories import UserRepository
-from ..service import Service
-import requests
-from io import BytesIO
-
-from ....settings import config
-
 import aiohttp
-
-from io import BytesIO
 import numpy as np
 import requests
 import soundfile as sf
+from aiogram.types.chat_member_updated import ChatMemberUpdated
+from aiogram.types.user import User as TelegramUser
+from aiogram_i18n.managers import BaseManager
 from pedalboard import Pedalboard, Reverb
+
+from ....settings import config
+from ...db.models import User
+from ...repositories import UserRepository
+from ..service import Service
+
 
 class UserService(Service):
 

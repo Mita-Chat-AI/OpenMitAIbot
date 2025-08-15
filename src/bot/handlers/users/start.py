@@ -1,6 +1,7 @@
 from aiogram import Router
 from aiogram.filters import CommandStart
 from aiogram.types import Message
+from aiogram_i18n import I18nContext
 from dependency_injector.wiring import Provide, inject
 
 from ...containers import Container
@@ -10,7 +11,6 @@ from ...services import UserService
 router = Router(name=__name__)
 
 
-from aiogram_i18n import I18nContext
 
 
 @router.message(CommandStart())

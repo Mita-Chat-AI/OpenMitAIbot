@@ -1,7 +1,8 @@
-from aiogram_i18n.exceptions import KeyNotFoundError
 from aiogram.dispatcher.middlewares.base import BaseMiddleware
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import CallbackQuery, Message
+from aiogram_i18n.exceptions import KeyNotFoundError
 from loguru import logger
+
 
 class I18nSafeMiddleware(BaseMiddleware):
     async def __call__(self, handler, event, data):

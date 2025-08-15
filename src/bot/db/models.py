@@ -1,11 +1,13 @@
+import re
+import uuid
 from enum import Enum
-from typing import List, Optional, Type
+from typing import List, Optional, Pattern, Type
+from uuid import UUID
 
 from beanie import Document
 from pydantic import BaseModel, Field, constr, field_validator
 
-import re
-from typing import Pattern
+
 class Edge_TTS(BaseModel):
     person: Optional[str] = Field(
         default='CrazyMita'
@@ -71,6 +73,19 @@ class Statistics(BaseModel):
         return v
 
 
+
+
+class TypeMessage(BaseModel):
+    type: str
+    content: str
+
+class UserMessageHistory(BaseModel):
+    messages: List[TypeMessage] = []
+    session_id: UUID = Field(
+        default=f"{uuid.uuid4()}"
+    )
+
+
 class User(Document):
     user_id: int
     settings: UserSettings = Field(
@@ -82,6 +97,11 @@ class User(Document):
     statistics: Statistics = Field(
         default_factory=Statistics
     )
+    user_history: UserMessageHistory = Field(
+        default_factory=UserMessageHistory
+    )
+
+
     
 
     class Settings:

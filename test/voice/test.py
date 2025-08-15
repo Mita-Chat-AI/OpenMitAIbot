@@ -1,7 +1,9 @@
 from io import BytesIO
+
 import numpy as np
 from pedalboard import Pedalboard, Reverb
 from pedalboard.io import AudioFile
+
 
 def apply_effects(audio_bytes: bytes) -> bytes:
     # BytesIO для чтения WAV

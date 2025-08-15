@@ -3,7 +3,7 @@ from typing import Optional
 from beanie import Document
 from pydantic import Field
 
-from ..db.models import User
+from ..db.models import TypeMessage, User, UserMessageHistory
 from ..exeptions import SelectError
 
 # from ..exceptions import RecordNotFoundError, SelectError
@@ -32,13 +32,17 @@ class UserRepository:
     ) -> Optional[User]:
 
         if user_id:
-            return await User.find_one(User.user_id == user_id)
-
+            user = await User.find_one(User.user_id == user_id)
         elif id:
-            return await User.get(id)
-
+            user = await User.get(id)
         else:
             raise SelectError("Не был передан ни один аргумент")
+
+        if not user:
+            user = await self.upsert(user_id)
+
+        return user
+
         
     async def update_locale(
         self,
@@ -52,3 +56,38 @@ class UserRepository:
         user.locale = locale
         await user.save()
         return user
+    
+    async def update_message_history(
+        self,
+        user_id: int,
+        human: str,
+        ai: str
+    ) -> None:
+        user = await self.select(user_id=user_id)
+
+        def to_message(type_, content):
+            return TypeMessage(type=type_, content=content)
+
+        user.user_history.messages.extend([
+            to_message("human", human),
+            to_message("ai", ai)
+        ])
+
+        await user.save()
+
+
+
+
+
+
+    async def get_history(
+            self,
+            user_id: int
+    ) -> None:
+        user = await self.select(user_id=user_id)
+        if user.user_history:
+            return [{"type": m.type, "content": m.content} for m in user.user_history.messages]
+        else:
+            return [{}]
+
+

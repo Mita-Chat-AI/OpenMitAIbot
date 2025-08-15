@@ -1,58 +1,12 @@
 
 
 
-from langchain_mongodb.chat_message_histories import MongoDBChatMessageHistory
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain_mongodb.chat_message_histories import MongoDBChatMessageHistory
 from langchain_openai import ChatOpenAI
-
-
 from pymongo import MongoClient
-
-from pymongo import MongoClient
-from langchain_core.messages import HumanMessage, AIMessage
-
-class SingleDocChatHistory:
-    def __init__(self, session_id, connection_string, db_name, collection_name):
-        self.session_id = session_id
-        self.client = MongoClient(connection_string)
-        self.collection = self.client[db_name][collection_name]
-        # создаём документ, если его нет
-        self.collection.update_one(
-            {"session_id": self.session_id},
-            {"$setOnInsert": {"messages": []}},
-            upsert=True
-        )
-
-    @property
-    def messages(self):
-        doc = self.collection.find_one({"session_id": self.session_id})
-        return doc.get("messages", []) if doc else []
-
-    # Этот метод ждёт LangChain
-    def add_messages(self, messages):
-        # messages — список HumanMessage или AIMessage
-        for m in messages:
-            if isinstance(m, HumanMessage):
-                self.add_message({"type": "human", "content": m.content})
-            elif isinstance(m, AIMessage):
-                self.add_message({"type": "ai", "content": m.content})
-
-    def add_message(self, message: dict):
-        self.collection.update_one(
-            {"session_id": self.session_id},
-            {"$push": {"messages": message}}
-        )
-
-    def clear(self):
-        self.collection.update_one(
-            {"session_id": self.session_id},
-            {"$set": {"messages": []}}
-        )
-
-
-
 
 prompt = ChatPromptTemplate.from_messages(
     [

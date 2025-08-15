@@ -8,9 +8,10 @@ from ..settings.main import config
 from .containers import Container
 from .db.connection import init_db
 from .handlers import load_routers
+from .middlewire.i18nsafemiddleware import I18nSafeMiddleware
 from .utils.shutdown import shutdown
 from .utils.startup import startup
-from .middlewire.i18nsafemiddleware import I18nSafeMiddleware
+
 
 async def main() -> None:
     bot = Bot(
