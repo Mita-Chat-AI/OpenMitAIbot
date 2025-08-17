@@ -22,7 +22,7 @@ async def mita_handler(
         Container.user_service
     ]) -> None:
 
-    msg = await user_service.ai_service.gg(
+    msg = await user_service.ask_ai(
         user_id=message.from_user.id,
         text=message.text
     )

@@ -1,10 +1,8 @@
 import html
 from io import BytesIO
 from typing import Optional, Union
-
 import aiohttp
 import numpy as np
-import requests
 import soundfile as sf
 from aiogram.types.chat_member_updated import ChatMemberUpdated
 from aiogram.types.user import User as TelegramUser
@@ -15,20 +13,17 @@ from ....settings import config
 from ...db.models import User
 from ...repositories import UserRepository
 from ..service import Service
-from .ai_service import AiService
-
+from ..model_services.ai_service import AiService
 
 class UserService(Service):
-
     data: User | None
 
-    def __init__(self, user_repository: UserRepository):
+    def __init__(self, user_repository: UserRepository, ai_service: AiService):
         super().__init__()
         self.user_repository = user_repository
-        self.ai_service = AiService(self)
+        self.ai_service = ai_service
         self.data = None
         self.config = self.get_env()
-
     async def get_data(
         self,
         search_argument: Union[str, int]
@@ -67,6 +62,23 @@ class UserService(Service):
         else:
             return name
         
+
+
+    async def ask_ai(self, user_id: int, text: str):
+        print(1)
+        history = await self.user_repository.get_history(user_id)
+        ai_response = await self.ai_service.generate_response(text, history)
+        print(ai_response)
+
+        if ai_response:
+            await self.user_repository.update_message_history(
+                user_id=user_id,
+                human=text,
+                ai=ai_response.content
+            )
+
+        return ai_response.content
+    
     def get_env(self):
         return config
     

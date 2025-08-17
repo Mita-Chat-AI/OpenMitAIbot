@@ -1,37 +1,35 @@
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
-
-from .user_service import UserService
-
+from langchain.schema import BaseMessage
 
 class AiService:
-    def __init__(self, user_service: UserService):
-        self.user_service = user_service
+    def __init__(self, model: str, api_key: str, base_url: str):
+        # теперь полностью независимый от UserService
         self.llm = ChatOpenAI(
-            model=self.user_service.config.ai_config.model,
-            api_key=self.user_service.config.ai_config.api_key,
-            base_url=self.user_service.config.ai_config.base_url
+            model=model,
+            api_key=api_key,
+            base_url=base_url
         )
 
-    async def gg(self, user_id: int, text: str):
+    async def generate_response(
+        self,
+        text: str,
+        history: list[dict] | None = None
+    ) -> BaseMessage | None:
+
+        if history is None:
+            history = []
+
         prompt = ChatPromptTemplate.from_messages([
             MessagesPlaceholder(variable_name="history"),
             ("human", "{question}"),
         ])
         chain = prompt | self.llm
 
-        history = await self.user_service.user_repository.get_history(user_id)
-
-        msg = await chain.ainvoke({
+        msg: BaseMessage | None = await chain.ainvoke({
             "question": text,
             "history": history
         })
-    
-        if msg:
-            await self.user_service.user_repository.update_message_history(
-                user_id=user_id,
-                human=text,
-                ai=msg.content
-            )
+        print(msg)
 
-        return msg.content if msg else None
+        return msg

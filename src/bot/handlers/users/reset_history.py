@@ -9,6 +9,7 @@ from ...services import UserService
 router = Router(name=__name__)
 
 @router.message(Command('reset'))
+@inject
 async def reset_history(
         message: Message,
         user_service: UserService = Provide[

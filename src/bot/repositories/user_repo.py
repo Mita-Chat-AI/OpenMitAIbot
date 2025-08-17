@@ -1,12 +1,8 @@
 from typing import Optional
 
-from beanie import Document
-from pydantic import Field
 
-from ..db.models import TypeMessage, User, UserMessageHistory
+from ..db.models import TypeMessage, User
 from ..exeptions import SelectError
-
-# from ..exceptions import RecordNotFoundError, SelectError
 
 
 class UserRepository:
