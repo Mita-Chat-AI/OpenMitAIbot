@@ -15,6 +15,7 @@ from ....settings import config
 from ...db.models import User
 from ...repositories import UserRepository
 from ..service import Service
+from .ai_service import AiService
 
 
 class UserService(Service):
@@ -24,6 +25,7 @@ class UserService(Service):
     def __init__(self, user_repository: UserRepository):
         super().__init__()
         self.user_repository = user_repository
+        self.ai_service = AiService(self)
         self.data = None
         self.config = self.get_env()
 
@@ -67,6 +69,9 @@ class UserService(Service):
         
     def get_env(self):
         return config
+    
+    async def return_all_user_ids(self) -> list[str]:
+        return [doc.user_id for doc in await self.user_repository.get_all_users()]
 
 
     async def edge_voice_generate(

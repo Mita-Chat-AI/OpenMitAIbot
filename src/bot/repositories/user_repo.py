@@ -42,8 +42,13 @@ class UserRepository:
             user = await self.upsert(user_id)
 
         return user
+    
 
-        
+    async def get_all_users(self) -> list[str]:
+        users = User.find_all()
+        return await users.to_list()
+
+
     async def update_locale(
         self,
         user_id: int,

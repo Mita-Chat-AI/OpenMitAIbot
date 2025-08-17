@@ -114,13 +114,13 @@ async def send_voice_channel(
         builder = InlineKeyboardBuilder()
         builder.add(
             InlineKeyboardButton(
-                text="Отправил",
+                text="Посмотреть в канале",
                 url=f"https://t.me/{channel_username}/{msg.message_id}"
             )
         )
 
         await call.message.reply(
-            text="ну да",
+            text="Ваше голосовое, было отправлено в канал: в нем, вы можете общаться, или присылать смешные голосовые.",
             reply_markup=builder.as_markup(resize_keyboard=True)
         )
     except Exception as e:

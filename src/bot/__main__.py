@@ -30,7 +30,8 @@ async def main() -> None:
     container = Container(bot=bot)
     container.wire(
         modules=[__name__], packages=[
-            '.handlers.users'
+            '.handlers.users',
+            '.handlers.admin'
             ]
     )
     await init_db()

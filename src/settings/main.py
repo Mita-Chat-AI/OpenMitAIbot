@@ -28,12 +28,25 @@ class VoiceConfig(BaseConfig):
 
     edge_tts: SecretStr
 
+class AiConfig(BaseConfig):
+    model_config = SettingsConfigDict(
+        env_prefix='ai_'
+    )
+
+    model: str
+    api_key: SecretStr
+    base_url: SecretStr
+
+
 class Config(BaseSettings):
     telegram: AiogramConfig = Field(
         default_factory=AiogramConfig
     )
     voice_config: VoiceConfig = Field(
         default_factory=VoiceConfig
+    )
+    ai_config: AiConfig = Field(
+        default_factory=AiConfig
     )
 
     @classmethod

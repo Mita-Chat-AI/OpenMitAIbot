@@ -42,6 +42,7 @@ from bson import ObjectId
 
 
 async def example():
+    await _example()
     client = AsyncMongoClient(
         host="mongodb://localhost:27017"
     )

@@ -18,7 +18,7 @@ async def mailing_channel_post(
         Container.user_service
     ]
 ) -> None:
-    tg_ids = [479611586] # заменить на user_service.get_users
+    tg_ids = await user_service.return_all_user_ids()
 
     for user_id in tg_ids:
         try:
@@ -28,4 +28,4 @@ async def mailing_channel_post(
                 message_id=post.message_id
             )
         except Exception as e:
-            print(f"Ошибка при рассылке {user_id}: {e}")
+            user_service.logger.warning(f"Ошибка при рассылке {user_id}: {e}")
