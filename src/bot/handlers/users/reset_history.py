@@ -15,5 +15,11 @@ async def reset_history(
             Container.user_service
         ]
 ): 
-    pass
+    await user_service.user_repository.clear_history(
+        user_id=message.from_user.id
+    )
+
+    await message.reply(
+        text="Ваша история была стерта"
+    )
 

@@ -80,10 +80,14 @@ class UserRepository:
 
         await user.save()
 
-
-
-
-
+    async def clear_history(
+        self,
+        user_id: int
+    ) -> None:
+        user = await self.select(user_id=user_id)
+        if user.user_history:
+            user.user_history.messages = []
+            await user.save()
 
     async def get_history(
             self,
