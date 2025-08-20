@@ -1,10 +1,12 @@
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
+from loguru import logger
 from langchain.schema import BaseMessage
+
+from openai import APIConnectionError, APITimeoutError
 
 class AiService:
     def __init__(self, model: str, api_key: str, base_url: str):
-        # теперь полностью независимый от UserService
         self.llm = ChatOpenAI(
             model=model,
             api_key=api_key,
@@ -26,10 +28,12 @@ class AiService:
         ])
         chain = prompt | self.llm
 
-        msg: BaseMessage | None = await chain.ainvoke({
-            "question": text,
-            "history": history
-        })
-        print(msg)
-
+        try:
+            msg: BaseMessage | None = await chain.ainvoke({
+                "question": text,
+                "history": history
+            })
+        except Exception as e:
+            logger.error(f"ошибка при получении ответа: {e}")
+            raise
         return msg

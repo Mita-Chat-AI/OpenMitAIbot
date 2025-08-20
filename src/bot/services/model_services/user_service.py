@@ -8,7 +8,7 @@ from aiogram.types.chat_member_updated import ChatMemberUpdated
 from aiogram.types.user import User as TelegramUser
 from aiogram_i18n.managers import BaseManager
 from pedalboard import Pedalboard, Reverb
-
+from openai import APIConnectionError, APITimeoutError
 from ....settings import config
 from ...db.models import User
 from ...repositories import UserRepository
@@ -24,6 +24,7 @@ class UserService(Service):
         self.ai_service = ai_service
         self.data = None
         self.config = self.get_env()
+
     async def get_data(
         self,
         search_argument: Union[str, int]
@@ -63,15 +64,23 @@ class UserService(Service):
             return name
         
 
-
-    async def ask_ai(self, user_id: int, text: str):
-        print(1)
+    async def ask_ai(
+            self,
+            user_id: int,
+            text: str
+    ) -> str:
         history = await self.user_repository.get_history(user_id)
-        ai_response = await self.ai_service.generate_response(text, history)
-        print(ai_response)
+        print(history)
 
-        if ai_response:
-            await self.user_repository.update_message_history(
+        try:
+            ai_response = await self.ai_service.generate_response(text, history)
+        except APIConnectionError:
+            return "Мита не смогла подключиться к серверу, на котором она работает... Напишите в поддержку канала."
+        except: 
+            return
+
+
+        await self.user_repository.update_message_history(
                 user_id=user_id,
                 human=text,
                 ai=ai_response.content

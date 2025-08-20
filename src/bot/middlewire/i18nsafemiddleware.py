@@ -5,7 +5,13 @@ from loguru import logger
 
 
 class I18nSafeMiddleware(BaseMiddleware):
-    async def __call__(self, handler, event, data):
+    async def __call__(
+            self,
+            handler,
+            event,
+            data
+
+        ):
         try:
             return await handler(event, data)
         except KeyNotFoundError as e:

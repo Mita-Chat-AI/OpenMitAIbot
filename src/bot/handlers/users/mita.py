@@ -27,7 +27,16 @@ async def mita_handler(
         text=message.text
     )
 
-    await message.reply(text=msg)
+    print(msg)
+
+    if not msg:
+        await message.reply(
+            text="К сожалению, Мита ничего не вернула в ответ"
+        )
+        return msg
+
+    result = await message.reply(text=msg)
+    return result
     
 
 

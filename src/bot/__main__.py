@@ -28,6 +28,8 @@ async def main() -> None:
         
 
     container = Container(bot=bot)
+ 
+
     container.wire(
         modules=[__name__], packages=[
             '.handlers.users',
@@ -49,16 +51,9 @@ async def main() -> None:
         default_locale="ru"
     )
 
-    # dp.update.outer_middleware.register(db_middleware.DBMiddleware())
 
-
-
-
-
-    # 1. Сначала подключаем i18n
     i18n_middleware.setup(dispatcher=dp)
 
-    # 2. Потом SafeMiddleware, чтобы ловил все KeyNotFoundError уже от i18n
     dp.update.outer_middleware.register(I18nSafeMiddleware())
 
     @dp.shutdown()
