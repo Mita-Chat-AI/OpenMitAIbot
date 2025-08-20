@@ -15,7 +15,7 @@ last_bot_message = {}
 
 
 @ask_router.message(Command("ask"), F.chat.type.in_([ChatType.GROUP, ChatType.SUPERGROUP]))
-async def ask(message: Message, i18n: I18nContext, bot: Bot, command: CommandObject) -> None:
+async def ask(message: Message, i18n: I18nContext, command: CommandObject) -> None:
     args = command.args
     if not args:
         return await message.reply(
