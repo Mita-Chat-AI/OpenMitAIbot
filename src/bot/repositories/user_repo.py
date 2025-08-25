@@ -45,6 +45,23 @@ class UserRepository:
         return await users.to_list()
 
 
+    async def update_ban(
+            self,
+            user_id: int,
+            ban: str
+    ) -> None:
+        user = await User.find_one(User.user_id == int(user_id))
+        if not user:
+            raise SelectError(f"Пользователь с user_id={user_id} не найден")
+        
+        user.settings.is_blocked = ban
+        await user.save()
+        return user
+
+    
+        
+
+
     async def update_locale(
         self,
         user_id: int,
