@@ -1,9 +1,11 @@
-from dependency_injector import containers, providers
 from aiogram import Bot
-from .repositories import UserRepository
-from .services.model_services.user_service import UserService
-from .services.model_services.ai_service import AiService
+from dependency_injector import containers, providers
+
 from ..settings import config
+from .repositories import UserRepository
+from .services.model_services.ai_service import AiService
+from .services.model_services.user_service import UserService
+
 
 class Container(containers.DeclarativeContainer):
     bot = providers.Dependency(instance_of=Bot)

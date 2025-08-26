@@ -1,6 +1,5 @@
 from typing import Optional
 
-
 from ..db.models import TypeMessage, User
 from ..exeptions import SelectError
 
@@ -59,7 +58,20 @@ class UserRepository:
         return user
 
     
+    async def update_voicemod(
+            self,
+            user_id: int,
+            mode: str
+    ) -> None:
+        user = await User.find_one(User.user_id == int(user_id))
+        if not user:
+            raise SelectError(f"Пользователь с user_id={user_id} не найден")
         
+        user.settings.voice_mode = mode
+        await user.save()
+        return user
+
+       
 
 
     async def update_locale(

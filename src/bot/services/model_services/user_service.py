@@ -1,19 +1,22 @@
 import html
 from io import BytesIO
 from typing import Optional, Union
+
 import aiohttp
 import numpy as np
 import soundfile as sf
 from aiogram.types.chat_member_updated import ChatMemberUpdated
 from aiogram.types.user import User as TelegramUser
 from aiogram_i18n.managers import BaseManager
-from pedalboard import Pedalboard, Reverb
 from openai import APIConnectionError, APITimeoutError
+from pedalboard import Pedalboard, Reverb
+
 from ....settings import config
 from ...db.models import User
 from ...repositories import UserRepository
-from ..service import Service
 from ..model_services.ai_service import AiService
+from ..service import Service
+
 
 class UserService(Service):
     data: User | None

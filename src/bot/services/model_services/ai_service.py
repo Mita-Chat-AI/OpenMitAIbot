@@ -1,9 +1,9 @@
+from langchain.schema import BaseMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
 from loguru import logger
-from langchain.schema import BaseMessage
-
 from openai import APIConnectionError, APITimeoutError
+
 
 class AiService:
     def __init__(self, model: str, api_key: str, base_url: str):
