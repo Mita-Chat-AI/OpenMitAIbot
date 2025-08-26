@@ -20,6 +20,8 @@ class AiogramConfig(BaseConfig):
 
     bot_token: SecretStr
     owner_id: int
+    channel_id: int
+    channel_mailing_id: int
 
 class VoiceConfig(BaseConfig):
     model_config = SettingsConfigDict(
