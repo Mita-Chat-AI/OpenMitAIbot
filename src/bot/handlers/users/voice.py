@@ -85,22 +85,25 @@ async def voice(
     await state.set_state(SendVoiceChannel.wait_send_voice_channel)
     await state.update_data(user_id=message.from_user.id, voice_buffer=voice_buffer, text=args)
 
-
 @router.callback_query(
     SendVoiceChannel.wait_send_voice_channel,
     F.data == 'send_voice_channel'
 )
+@inject
 async def send_voice_channel(
     call: CallbackQuery,
     bot: Bot,
-    state: FSMContext
+    state: FSMContext,
+    user_service: UserService = Provide[
+        Container.user_service
+    ]
 ) -> None:
     state_data = await state.get_data()
     voice_data = state_data.get("voice_buffer")
     text = state_data.get("text")
 
     try:
-        channel_id = -1002326238712
+        channel_id = user_service.config.telegram.channel_id
 
         chat_info = await bot.get_chat(channel_id)
         channel_username = chat_info.username
