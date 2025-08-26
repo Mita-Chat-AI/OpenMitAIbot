@@ -9,15 +9,18 @@ from ...services import UserService
 
 router = Router(name=__name__)
 
-@router.channel_post(F.chat.id == -1002453540085)
+@router.channel_post()
 @inject
 async def mailing_channel_post(
     post: ChatMemberUpdated,
     bot: Bot,
-    user_service: UserService = Provide[
-        Container.user_service
-    ]
+    user_service: UserService = Provide[Container.user_service],
 ) -> None:
+    channel_id = user_service.config.telegram.channel_mailing_id
+
+    if post.chat.id != channel_id:
+        return
+
     tg_ids = await user_service.return_all_user_ids()
 
     for user_id in tg_ids:
