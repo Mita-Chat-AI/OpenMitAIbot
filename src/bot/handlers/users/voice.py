@@ -13,7 +13,9 @@ from dependency_injector.wiring import Provide, inject
 from ...containers import Container
 from ...services import UserService
 
+
 router = Router(name=__name__)
+
 
 class SendVoiceChannel(StatesGroup):
     wait_send_voice_channel = State()
@@ -30,7 +32,7 @@ async def voice(
     user_service: UserService = Provide[
         Container.user_service
     ]
-):
+) -> None:
     args = command.args
 
     if not args:
@@ -38,7 +40,7 @@ async def voice(
             text=i18n.get("voice_missing_text")
         )
         return
-    
+
     msg = await message.reply(
         text=i18n.get("voice_waiting")
     )
@@ -84,6 +86,7 @@ async def voice(
     )
     await state.set_state(SendVoiceChannel.wait_send_voice_channel)
     await state.update_data(user_id=message.from_user.id, voice_buffer=voice_buffer, text=args)
+
 
 @router.callback_query(
     SendVoiceChannel.wait_send_voice_channel,

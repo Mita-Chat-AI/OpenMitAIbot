@@ -30,3 +30,4 @@ class I18nSafeMiddleware(BaseMiddleware):
                     text=f"translate {e} sorry..."
                 )
                 return
+            

@@ -21,7 +21,8 @@ async def mita_handler(
     bot: Bot,
     user_service: UserService = Provide[
         Container.user_service
-    ]) -> Message:
+    ]
+) -> Message:
 
     await bot.send_chat_action(
         chat_id=message.chat.id,

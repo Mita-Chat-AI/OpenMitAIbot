@@ -14,7 +14,9 @@ router = Router(name=__name__)
 async def mailing_channel_post(
     post: ChatMemberUpdated,
     bot: Bot,
-    user_service: UserService = Provide[Container.user_service],
+    user_service: UserService = Provide[
+        Container.user_service
+    ]
 ) -> None:
     channel_id = user_service.config.telegram.channel_mailing_id
 

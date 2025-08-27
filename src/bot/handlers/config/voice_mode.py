@@ -3,11 +3,7 @@ from aiogram.filters import StateFilter
 from aiogram.filters.command import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import (
-    CallbackQuery,
-    InlineKeyboardButton,
-    Message,
-)
+from aiogram.types import CallbackQuery, InlineKeyboardButton, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from dependency_injector.wiring import Provide, inject
 
@@ -22,13 +18,9 @@ router = Router(name=__name__)
 
 
 @router.message(Command('voice_mode'))
-@inject
 async def config_voice_mode(
     message: Message,
-    state: FSMContext,
-    user_service: UserService = Provide[
-        Container.user_service
-    ]
+    state: FSMContext
 ) -> None:
     
     kb = InlineKeyboardBuilder()
@@ -56,12 +48,18 @@ async def config_voice_mode(
     )
 
 
-@router.callback_query(StateFilter(WaitVoiceMod.wait_voice_mod))
+@router.callback_query(
+        StateFilter(
+            WaitVoiceMod.wait_voice_mod
+        )
+)
 @inject
 async def process_voice_mode(
     callback: CallbackQuery,
     state: FSMContext,
-    user_service: UserService = Provide[Container.user_service]
+    user_service: UserService = Provide[
+        Container.user_service
+    ]
 ):
     action, _ = callback.data.split(":")
 

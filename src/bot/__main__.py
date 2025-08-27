@@ -25,10 +25,8 @@ async def main() -> None:
     @dp.startup()
     async def on_startup():
         await startup(bot)
-        
 
     container = Container(bot=bot)
- 
 
     container.wire(
         modules=[__name__], packages=[
@@ -40,9 +38,6 @@ async def main() -> None:
     await init_db()
     for router in await load_routers():
         dp.include_routers(router)
-
-    
-    # from .services.model_services.user_service import UserManager
 
     service = container.user_service()
     i18n_middleware = I18nMiddleware(
@@ -60,7 +55,6 @@ async def main() -> None:
     @dp.shutdown()
     async def on_shutdown():
         await shutdown(bot)
-
 
     try:
         await dp.start_polling(bot)

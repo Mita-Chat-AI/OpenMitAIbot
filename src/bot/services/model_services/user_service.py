@@ -8,10 +8,10 @@ import soundfile as sf
 from aiogram.types.chat_member_updated import ChatMemberUpdated
 from aiogram.types.user import User as TelegramUser
 from aiogram_i18n.managers import BaseManager
-from openai import APIConnectionError, APITimeoutError
+from openai import APIConnectionError
 from pedalboard import Pedalboard, Reverb
 
-from ....settings import config
+from ....settings import config, Config
 from ...db.models import User
 from ...repositories import UserRepository
 from ..model_services.ai_service import AiService
@@ -80,24 +80,21 @@ class UserService(Service):
         except APIConnectionError:
             return "Мита не смогла подключиться к серверу, на котором она работает... Напишите в поддержку канала."
         except Exception as e: 
-            print(e)
+            self.logger.error(e)
             return
-
 
         await self.user_repository.update_message_history(
                 user_id=user_id,
                 human=text,
                 ai=ai_response.content
             )
-
         return ai_response.content
     
-    def get_env(self):
+    def get_env(self) -> Config:
         return config
-    
+
     async def return_all_user_ids(self) -> list[str]:
         return [doc.user_id for doc in await self.user_repository.get_all_users()]
-
 
     async def edge_voice_generate(
             self, user_id: int,
@@ -152,7 +149,6 @@ class UserService(Service):
         out_buffer.seek(0)
         self.logger.success("Эффект для голосового, был применен успешно")
         return out_buffer.read()
-
 
     class UserManager(BaseManager):
         def __init__(self, user_repository: UserRepository):

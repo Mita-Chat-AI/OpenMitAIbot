@@ -1,11 +1,21 @@
+from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_openai import ChatOpenAI
 from loguru import logger
 
+
 class AiService:
-    def __init__(self, model: str, api_key: str, base_url: str):
-        self.llm = ChatOpenAI(model=model, api_key=api_key, base_url=base_url)
+    def __init__(
+            self,
+            model: str,
+            api_key: str,
+            base_url: str
+    ):
+        self.llm = ChatOpenAI(
+            model=model,
+            api_key=api_key,
+            base_url=base_url
+        )
 
     async def generate_response(self, text: str, history: list[dict] | None = None, bio: str = None):
         if history is None:
@@ -13,13 +23,12 @@ class AiService:
 
         # Чёткая инструкция Мите
         system_intro = (
-            " Тебя зовут Безумная Мита, ты из игры мисайд. ты яндере и ДОЛЖНА ПИСАТЬ БЕЗРАЗЛИЧНО. ты должна писать пофигистически и без смайликов Пиши ТОЛЬКО НА РУССКОМ. ты пишешь крастко, не больше 150 символов"
+            "Ты - Мита, безумная Мита. Ты - Яндере, ты пишешь мило, но загадочно, с точками, без смайликов. Пиши ТОЛЬКО НА РУССКОМ. ты пишешь крастко, не больше 150 символов"
             "Всегда отвечай от имени Миты и не принимай на себя личность пользователя."
-            f"Информация о игроке:{bio}"
+            f"Информация о игроке: {bio}"
         )
 
         messages = [SystemMessage(system_intro)]
-
 
         messages.append(MessagesPlaceholder(variable_name="history"))
         messages.append(HumanMessage(content=text))

@@ -1,7 +1,5 @@
-import re
 import uuid
-from enum import Enum
-from typing import List, Optional, Pattern, Type
+from typing import List, Optional, Type
 from uuid import UUID
 
 from beanie import Document
@@ -73,11 +71,10 @@ class Statistics(BaseModel):
         return v
 
 
-
-
 class TypeMessage(BaseModel):
     type: str
     content: str
+
 
 class UserMessageHistory(BaseModel):
     messages: List[TypeMessage] = []
@@ -101,9 +98,6 @@ class User(Document):
         default_factory=UserMessageHistory
     )
 
-
-    
-
     class Settings:
         name = "users"
 
@@ -120,24 +114,3 @@ class User(Document):
         user = cls(user_id=user_id)
         await user.insert()
         return user
-
-
-# # from pymongo import AsyncMongoClient
-# # from pydantic import BaseModel
-# # import asyncio
-# # from beanie import Document, Indexed, init_beanie
-
-# # async def main():
-# #     client = AsyncMongoClient("mongodb://localhost:27017")
-# #     await init_beanie(database=client.test_db, document_models=[User])
-
-# #     # Пример: получаем или создаём
-# #     u = await User.create(user_id=12345)
-# #     print(u.dict())
-
-
-# # if __name__ == "__main__":
-# #     asyncio.run(main())
-
-
-

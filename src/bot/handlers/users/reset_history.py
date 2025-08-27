@@ -11,11 +11,11 @@ router = Router(name=__name__)
 @router.message(Command('reset'))
 @inject
 async def reset_history(
-        message: Message,
-        user_service: UserService = Provide[
-            Container.user_service
-        ]
-): 
+    message: Message,
+    user_service: UserService = Provide[
+        Container.user_service
+    ]
+) -> None: 
     await user_service.user_repository.clear_history(
         user_id=message.from_user.id
     )
