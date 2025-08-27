@@ -43,12 +43,22 @@ class UserRepository:
         users = User.find_all()
         return await users.to_list()
 
+    async def update_bio(
+            self,
+            user_id: int,
+            bio: str
+    ) -> None:
+        user = await self.upsert(user_id=user_id)
+
+        user.settings.system_prompt = bio
+        await user.save()
+
 
     async def update_ban(
             self,
             user_id: int,
             ban: str
-    ) -> None:
+    ) -> Optional[User]:
         user = await User.find_one(User.user_id == int(user_id))
         if not user:
             raise SelectError(f"Пользователь с user_id={user_id} не найден")
@@ -57,12 +67,12 @@ class UserRepository:
         await user.save()
         return user
 
-    
+
     async def update_voicemod(
             self,
             user_id: int,
             mode: str
-    ) -> None:
+    ) -> Optional[User]:
         user = await User.find_one(User.user_id == int(user_id))
         if not user:
             raise SelectError(f"Пользователь с user_id={user_id} не найден")
@@ -70,8 +80,6 @@ class UserRepository:
         user.settings.voice_mode = mode
         await user.save()
         return user
-
-       
 
 
     async def update_locale(
@@ -86,7 +94,8 @@ class UserRepository:
         user.locale = locale
         await user.save()
         return user
-    
+
+
     async def update_message_history(
         self,
         user_id: int,
@@ -104,6 +113,7 @@ class UserRepository:
         ])
 
         await user.save()
+
 
     async def clear_history(
         self,
