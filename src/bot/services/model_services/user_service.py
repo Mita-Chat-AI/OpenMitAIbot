@@ -73,13 +73,14 @@ class UserService(Service):
             text: str
     ) -> str:
         history = await self.user_repository.get_history(user_id)
-        print(history)
+        user = await self.get_data(user_id)
 
         try:
-            ai_response = await self.ai_service.generate_response(text, history)
+            ai_response = await self.ai_service.generate_response(text, history, user.settings.system_prompt)
         except APIConnectionError:
             return "Мита не смогла подключиться к серверу, на котором она работает... Напишите в поддержку канала."
-        except: 
+        except Exception as e: 
+            print(e)
             return
 
 
