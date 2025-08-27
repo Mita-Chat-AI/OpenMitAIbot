@@ -1,6 +1,3 @@
-from types import CoroutineType
-from typing import Any
-
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
@@ -25,7 +22,7 @@ class AiService:
             text: str,
             history: list[dict] | None = None,
             bio: str = None
-    ) -> CoroutineType[Any, Any, BaseMessage]:
+    ) -> BaseMessage:
         if history is None:
             history = []
 
