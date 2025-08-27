@@ -27,18 +27,19 @@ async def ask(
     args = command.args
     if not args:
         return await message.reply(
-            text='Может, напишешь свой вопрос?'
+            text=i18n.get('wait-question')
         )
     
     msg = await message.reply(text=i18n.get("waiting_for_message_neural"))
     user_id = message.from_user.id
 
-    bot_response: Message = await mita_handler(message, bot)
+    bot_response: Message | None = await mita_handler(message, bot, i18n)
     await msg.delete()
 
-    if bot_response.message_id:
+    if bot_response and bot_response.message_id:
         last_bot_message[user_id] = bot_response.message_id
         memory_time[user_id] = time.time()
+
 
 
 @ask_router.message(
@@ -47,10 +48,11 @@ async def ask(
 )
 async def handle_reply_to_bot(
     message: Message,
-    bot: Bot
+    bot: Bot,
+    i18n: I18nContext
 ) -> None:
     user_id = message.from_user.id
 
     if user_id in last_bot_message and message.reply_to_message.message_id == last_bot_message[user_id]:
-        bot_response = await mita_handler(message, bot)
+        bot_response = await mita_handler(message, bot, i18n)
         last_bot_message[user_id] = bot_response.message_id

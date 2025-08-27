@@ -97,6 +97,7 @@ async def send_voice_channel(
     call: CallbackQuery,
     bot: Bot,
     state: FSMContext,
+    i18n: I18nContext,
     user_service: UserService = Provide[
         Container.user_service
     ]
@@ -120,16 +121,16 @@ async def send_voice_channel(
         builder = InlineKeyboardBuilder()
         builder.add(
             InlineKeyboardButton(
-                text="Посмотреть в канале",
+                text=i18n.get('voice-watch-to-channel'),
                 url=f"https://t.me/{channel_username}/{msg.message_id}"
             )
         )
 
         await call.message.reply(
-            text="Ваше голосовое, было отправлено в канал: в нем, вы можете общаться, или присылать смешные голосовые.",
+            text=i18n.get('voice-succeful-channel'),
             reply_markup=builder.as_markup(resize_keyboard=True)
         )
     except Exception as e:
-        await call.message.reply(text=f"ну не смог отправить: {e}")
+        await call.message.reply(text=i18n.get('voice-error-send-channel', e=str(e)))
 
     await state.clear()

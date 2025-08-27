@@ -4,7 +4,9 @@ from aiogram import Bot, F, Router
 from aiogram.enums import ChatAction, ChatType, ContentType
 from aiogram.types import BufferedInputFile, Message
 from dependency_injector.wiring import Provide, inject
+from openai import APIConnectionError
 
+from aiogram_i18n import I18nContext
 from ...containers import Container
 from ...services import UserService
 
@@ -19,6 +21,7 @@ router = Router(name=__name__)
 async def mita_handler(
     message: Message,
     bot: Bot,
+    i18n: I18nContext,
     user_service: UserService = Provide[
         Container.user_service
     ]
@@ -29,13 +32,20 @@ async def mita_handler(
         action=ChatAction.TYPING
     )
 
-    msg = await user_service.ask_ai(
-        user_id=message.from_user.id,
-        text=message.text
-    )
+    try:
+        msg = await user_service.ask_ai(
+            user_id=message.from_user.id,
+            text=message.text
+        )
+    except APIConnectionError:
+        await message.reply(
+            text=i18n.get('mita-no-responce')
+        )
+        return
+
     if not msg:
         await message.reply(
-            text="К сожалению, Мита ничего не вернула в ответ"
+            text=i18n.get('mita-no-responce')
         )
         return msg
 
