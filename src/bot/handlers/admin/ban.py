@@ -2,7 +2,7 @@ from aiogram import Router
 from aiogram.filters.command import Command, CommandObject
 from aiogram.types import Message
 from dependency_injector.wiring import Provide, inject
-
+from aiogram_i18n import I18nContext
 from ...containers import Container
 from ...services import UserService
 
@@ -13,6 +13,7 @@ router = Router(name=__name__)
 async def mailing_channel_post(
     message: Message,
     command: CommandObject,
+    i18n: I18nContext,
     user_service: UserService = Provide[
         Container.user_service
     ]
@@ -20,26 +21,24 @@ async def mailing_channel_post(
     arg = command.args.split()
 
     if len(arg) < 2:
-        await message.reply("Используй: /ban <user_id> <1-блок/0-разблок>")
+        await message.reply(i18n.get("ban-usage"))
         return
 
     try:
         user_id = int(arg[0])
         ban_flag = arg[1] == "1"
 
-
         await user_service.user_repository.update_ban(
             user_id=user_id,
-            ban=str(True if ban_flag == 1 else False)
+            ban=str(ban_flag)
         )
 
         if ban_flag:
-            await message.reply(f"Пользователь {user_id} заблокирован ✅")
+            await message.reply(i18n.get("ban-user-blocked", user_id=user_id))
         else:
-            await message.reply(f"Пользователь {user_id} разблокирован ✅")
+            await message.reply(i18n.get("ban-user-unblocked", user_id=user_id))
 
     except ValueError:
-        await message.reply("Неверный формат user_id или флага.")
+        await message.reply(i18n.get("ban-invalid-format"))
     except Exception as e:
-        await message.reply(f"Ошибка: {e}")
-        
+        await message.reply(i18n.get("ban-error", error=str(e)))

@@ -42,7 +42,6 @@ async def ask(
         memory_time[user_id] = time.time()
 
 
-
 @ask_router.message(
         F.reply_to_message,
         F.chat.type.in_([ChatType.GROUP, ChatType.SUPERGROUP])
