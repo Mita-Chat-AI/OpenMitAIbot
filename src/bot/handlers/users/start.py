@@ -8,7 +8,6 @@ from ...containers import Container
 from ...db.models import User
 from ...services import UserService
 
-
 router = Router(name=__name__)
 
 

@@ -11,7 +11,7 @@ from aiogram_i18n.managers import BaseManager
 from openai import APIConnectionError
 from pedalboard import Pedalboard, Reverb
 
-from ....settings import config, Config
+from ....settings import Config, config
 from ...db.models import User
 from ...repositories import UserRepository
 from ..model_services.ai_service import AiService

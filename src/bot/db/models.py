@@ -1,8 +1,7 @@
-import uuid
-from typing import List, Optional, Type
-from uuid import UUID
 import re
-from typing import Pattern
+import uuid
+from typing import List, Optional, Pattern, Type
+from uuid import UUID
 
 from beanie import Document
 from pydantic import BaseModel, Field, constr, field_validator

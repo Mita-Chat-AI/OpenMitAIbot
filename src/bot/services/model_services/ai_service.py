@@ -1,6 +1,7 @@
 from types import CoroutineType
 from typing import Any
-from langchain_core.messages import HumanMessage, SystemMessage, BaseMessage
+
+from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
 from loguru import logger

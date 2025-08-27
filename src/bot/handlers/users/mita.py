@@ -3,10 +3,10 @@
 from aiogram import Bot, F, Router
 from aiogram.enums import ChatAction, ChatType, ContentType
 from aiogram.types import BufferedInputFile, Message
+from aiogram_i18n import I18nContext
 from dependency_injector.wiring import Provide, inject
 from openai import APIConnectionError
 
-from aiogram_i18n import I18nContext
 from ...containers import Container
 from ...services import UserService
 

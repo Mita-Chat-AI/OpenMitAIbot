@@ -13,7 +13,6 @@ from dependency_injector.wiring import Provide, inject
 from ...containers import Container
 from ...services import UserService
 
-
 router = Router(name=__name__)
 
 
