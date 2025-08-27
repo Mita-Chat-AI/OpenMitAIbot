@@ -39,13 +39,13 @@ async def mita_handler(
         )
     except APIConnectionError:
         await message.reply(
-            text=i18n.get('mita-no-responce')
+            text=i18n.get('mita-no-response')
         )
         return
 
     if not msg:
         await message.reply(
-            text=i18n.get('mita-no-responce')
+            text=i18n.get('mita-no-response')
         )
         return msg
 

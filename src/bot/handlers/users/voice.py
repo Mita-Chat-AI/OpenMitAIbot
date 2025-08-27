@@ -37,12 +37,12 @@ async def voice(
 
     if not args:
         await message.reply(
-            text=i18n.get("voice_missing_text")
+            text=i18n.get("voice-missing-text")
         )
         return
 
     msg = await message.reply(
-        text=i18n.get("voice_waiting")
+        text=i18n.get("voice-waiting")
     )
 
     await bot.send_chat_action(
@@ -58,7 +58,7 @@ async def voice(
 
     if not voice_buffer:
         await message.reply(
-            text=i18n.get("voice_failed")
+            text=i18n.get("voice-failed-voice-buffer")
         )
         return
     
@@ -71,7 +71,7 @@ async def voice(
     kb = InlineKeyboardBuilder()
     kb.add(
         InlineKeyboardButton(
-            text=LazyProxy("voice_send_channel"),
+            text=LazyProxy("voice-send-channel"),
             callback_data="send_voice_channel"
         )
     )

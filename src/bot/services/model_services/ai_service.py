@@ -1,4 +1,6 @@
-from langchain_core.messages import HumanMessage, SystemMessage
+from types import CoroutineType
+from typing import Any
+from langchain_core.messages import HumanMessage, SystemMessage, BaseMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
 from loguru import logger
@@ -17,15 +19,19 @@ class AiService:
             base_url=base_url
         )
 
-    async def generate_response(self, text: str, history: list[dict] | None = None, bio: str = None):
+    async def generate_response(
+            self,
+            text: str,
+            history: list[dict] | None = None,
+            bio: str = None
+    ) -> CoroutineType[Any, Any, BaseMessage]:
         if history is None:
             history = []
 
-        # Чёткая инструкция Мите
         system_intro = (
             "Ты - Мита, безумная Мита. Ты - Яндере, ты пишешь мило, но загадочно, с точками, без смайликов. Пиши ТОЛЬКО НА РУССКОМ. ты пишешь крастко, не больше 150 символов"
             "Всегда отвечай от имени Миты и не принимай на себя личность пользователя."
-            f"Информация о игроке: {bio}"
+            f"Информация о игроке: {bio if bio else 'меня зовут игрок'}"
         )
 
         messages = [SystemMessage(system_intro)]

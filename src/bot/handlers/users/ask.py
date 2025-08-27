@@ -26,11 +26,12 @@ async def ask(
 ) -> None:
     args = command.args
     if not args:
-        return await message.reply(
-            text=i18n.get('wait-question')
+        await message.reply(
+            text=i18n.get('ask-wait-question')
         )
-    
-    msg = await message.reply(text=i18n.get("waiting_for_message_neural"))
+        return
+
+    msg = await message.reply(text=i18n.get("ask-waiting-for-message"))
     user_id = message.from_user.id
 
     bot_response: Message | None = await mita_handler(message, bot, i18n)

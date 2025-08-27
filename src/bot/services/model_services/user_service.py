@@ -67,22 +67,23 @@ class UserService(Service):
             return name
         
 
-    async def ask_ai(self, user_id: int, text: str) -> str:
+    async def ask_ai(
+            self,
+            user_id: int,
+            text: str
+    ) -> str:
         history = await self.user_repository.get_history(user_id)
         user = await self.get_data(user_id)
 
-        ai_response = await self.ai_service.generate_response(
-            text, history, user.settings.system_prompt
-        )
+        ai_response = await self.ai_service.generate_response(text, history, user.settings.system_prompt)
 
         await self.user_repository.update_message_history(
-            user_id=user_id,
-            human=text,
-            ai=ai_response.content
-        )
+                user_id=user_id,
+                human=text,
+                ai=ai_response.content
+            )
         return ai_response.content
-
-        
+    
     def get_env(self) -> Config:
         return config
 
