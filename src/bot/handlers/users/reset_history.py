@@ -2,7 +2,7 @@ from aiogram import Router
 from aiogram.filters.command import Command
 from aiogram.types import Message
 from dependency_injector.wiring import Provide, inject
-
+from aiogram_i18n import I18nContext
 from ...containers import Container
 from ...services import UserService
 
@@ -12,6 +12,7 @@ router = Router(name=__name__)
 @inject
 async def reset_history(
     message: Message,
+    i18n: I18nContext,
     user_service: UserService = Provide[
         Container.user_service
     ]
@@ -21,6 +22,6 @@ async def reset_history(
     )
 
     await message.reply(
-        text="Ваша история была стерта"
+        text=i18n.get('reset_history-reset')
     )
 
