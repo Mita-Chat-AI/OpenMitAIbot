@@ -122,7 +122,7 @@ async def send_voice_channel(
         msg = await bot.send_voice(
             chat_id=channel_id,
             voice=BufferedInputFile(voice_data, filename="voice.mp3"),
-            caption=f"{text}\n{call.from_user.mention_markdown()}"
+            caption=f"{text}\n{call.from_user.mention_html()}"
         )
 
         builder = InlineKeyboardBuilder()
