@@ -81,10 +81,16 @@ async def voice(
             filename='voice.mp3',
         ),
         reply_markup=kb.as_markup()
-
     )
-    await state.set_state(SendVoiceChannel.wait_send_voice_channel)
-    await state.update_data(user_id=message.from_user.id, voice_buffer=voice_buffer, text=args)
+
+    await state.set_state(
+        SendVoiceChannel.wait_send_voice_channel
+    )
+    await state.update_data(
+        user_id=message.from_user.id,
+        voice_buffer=voice_buffer,
+        text=args
+    )
 
 
 @router.callback_query(
@@ -108,13 +114,15 @@ async def send_voice_channel(
     try:
         channel_id = user_service.config.telegram.channel_id
 
-        chat_info = await bot.get_chat(channel_id)
+        chat_info = await bot.get_chat(
+            chat_id=channel_id
+        )
         channel_username = chat_info.username
 
         msg = await bot.send_voice(
             chat_id=channel_id,
-            voice=BufferedInputFile(voice_data, filename="voice.ogg"),
-            caption=text
+            voice=BufferedInputFile(voice_data, filename="voice.mp3"),
+            caption=f"{text}\n{call.from_user.mention_markdown()}"
         )
 
         builder = InlineKeyboardBuilder()
@@ -129,7 +137,13 @@ async def send_voice_channel(
             text=i18n.get('voice-succeful-channel'),
             reply_markup=builder.as_markup(resize_keyboard=True)
         )
+
     except Exception as e:
-        await call.message.reply(text=i18n.get('voice-error-send-channel', e=str(e)))
+        await call.message.reply(
+            text=i18n.get(
+                'voice-error-send-channel',
+                e=str(e)
+            )
+        )
 
     await state.clear()

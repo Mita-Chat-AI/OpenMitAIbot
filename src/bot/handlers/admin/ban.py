@@ -6,7 +6,9 @@ from aiogram_i18n import I18nContext
 from ...containers import Container
 from ...services import UserService
 
+
 router = Router(name=__name__)
+
 
 @router.message(Command('ban'))
 @inject
@@ -18,11 +20,17 @@ async def mailing_channel_post(
         Container.user_service
     ]
 ) -> None:
-    arg = command.args.split()
+    args = command.args
 
-    if len(arg) < 2:
-        await message.reply(i18n.get("ban-usage"))
+    if len(args) < 2 or not args:
+        await message.reply(
+            text=i18n.get(
+                "ban-usage"
+            )
+        )
         return
+
+    arg = command.args.split()
 
     try:
         user_id = int(arg[0])
@@ -34,11 +42,30 @@ async def mailing_channel_post(
         )
 
         if ban_flag:
-            await message.reply(i18n.get("ban-user-blocked", user_id=user_id))
+            await message.reply(
+                text=i18n.get(
+                    "ban-user-blocked",
+                    user_id=user_id
+                )
+            )
         else:
-            await message.reply(i18n.get("ban-user-unblocked", user_id=user_id))
+            await message.reply(
+                text=i18n.get(
+                    "ban-user-unblocked",
+                    user_id=user_id
+                )
+            )
 
     except ValueError:
-        await message.reply(i18n.get("ban-invalid-format"))
+        await message.reply(
+            text=i18n.get(
+                "ban-invalid-format"
+                )
+            )
     except Exception as e:
-        await message.reply(i18n.get("ban-error", error=str(e)))
+        await message.reply(
+            text=i18n.get(
+                "ban-error",
+                error=str(e)    
+            )
+        )

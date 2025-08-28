@@ -24,22 +24,21 @@ router = Router(name=__name__)
 async def config_voice_mode(
     message: Message,
     state: FSMContext,
-    i18n: I18nContext
+    i18n: I18nContext,
 ) -> None:
-    
     kb = InlineKeyboardBuilder()
 
     kb.add(
         InlineKeyboardButton(
             text=LazyProxy("voice_mode-enable-btn"),
-            callback_data='on:voice_mod'
+            callback_data='on:voice_mod',
         )
     )
     
     kb.add(
         InlineKeyboardButton(
             text=LazyProxy("voice_mode-disable-btn"),
-            callback_data='off:voice_mod'
+            callback_data='off:voice_mod',
         )
     )
     kb.adjust()
@@ -65,11 +64,22 @@ async def process_voice_mode(
     action, _ = callback.data.split(":")
 
     if action == "on":
-        await user_service.user_repository.update_voicemod(callback.from_user.id, True)
-        await callback.message.edit_text(i18n.get("voice_mode-enabled"))
+        await user_service.user_repository.update_voicemod(
+            user_id=callback.from_user.id,
+            mode=True,
+        )
+        await callback.message.edit_text(
+            text=i18n.get("voice_mode-enabled")
+        )
+
     elif action == "off":
-        await user_service.user_repository.update_voicemod(callback.from_user.id, False)
-        await callback.message.edit_text(i18n.get("voice_mode-disabled"))
+        await user_service.user_repository.update_voicemod(
+            user_id=callback.from_user.id,
+            mode=False,
+        )
+        await callback.message.edit_text(
+            text=i18n.get("voice_mode-disabled")
+        )
 
     await state.clear()
     await callback.answer()

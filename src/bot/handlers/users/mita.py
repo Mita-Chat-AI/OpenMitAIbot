@@ -6,7 +6,7 @@ from aiogram.types import BufferedInputFile, Message
 from aiogram_i18n import I18nContext
 from dependency_injector.wiring import Provide, inject
 from openai import APIConnectionError
-
+from typing import Optional
 from ...containers import Container
 from ...services import UserService
 
@@ -25,7 +25,7 @@ async def mita_handler(
     user_service: UserService = Provide[
         Container.user_service
     ]
-) -> Message:
+) -> Optional[Message] | None:
 
     await bot.send_chat_action(
         chat_id=message.chat.id,
@@ -50,7 +50,7 @@ async def mita_handler(
         return msg
 
     user = await user_service.get_data(
-        message.from_user.id
+        search_argument=message.from_user.id
     )
 
     if user.settings.voice_mode:
@@ -71,7 +71,9 @@ async def mita_handler(
         )
         return result
 
-    result = await message.reply(text=msg)
+    result = await message.reply(
+        text=msg
+    )
     return result
 
 

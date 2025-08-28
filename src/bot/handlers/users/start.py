@@ -24,4 +24,6 @@ async def start_command_deep_link_false(
         search_argument=message.from_user.id
     )
 
-    await message.answer(i18n.get('hello'))
+    await message.answer(
+        text=i18n.get('hello')
+    )

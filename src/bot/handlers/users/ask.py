@@ -10,13 +10,19 @@ from .mita import mita_handler
 
 ask_router = Router()
 
+
 memory_time = {}
 last_bot_message = {}
 
 
 @ask_router.message(
         Command("ask"),
-        F.chat.type.in_([ChatType.GROUP, ChatType.SUPERGROUP])
+        F.chat.type.in_(
+            [
+                ChatType.GROUP,
+                ChatType.SUPERGROUP
+            ]
+        )
 )
 async def ask(
     message: Message,
@@ -31,10 +37,16 @@ async def ask(
         )
         return
 
-    msg = await message.reply(text=i18n.get("ask-waiting-for-message"))
+    msg = await message.reply(
+        text=i18n.get("ask-waiting-for-message")
+    )
     user_id = message.from_user.id
 
-    bot_response: Message | None = await mita_handler(message, bot, i18n)
+    bot_response: Message | None = await mita_handler(
+        message=message,
+        bot=bot,
+        i18n=i18n
+    )
     await msg.delete()
 
     if bot_response and bot_response.message_id:
@@ -44,7 +56,12 @@ async def ask(
 
 @ask_router.message(
         F.reply_to_message,
-        F.chat.type.in_([ChatType.GROUP, ChatType.SUPERGROUP])
+        F.chat.type.in_(
+            [
+                ChatType.GROUP,
+                ChatType.SUPERGROUP
+            ]
+        )
 )
 async def handle_reply_to_bot(
     message: Message,
@@ -54,5 +71,9 @@ async def handle_reply_to_bot(
     user_id = message.from_user.id
 
     if user_id in last_bot_message and message.reply_to_message.message_id == last_bot_message[user_id]:
-        bot_response = await mita_handler(message, bot, i18n)
+        bot_response: Message | None = await mita_handler(
+            message=message,
+            bot=bot,
+            i18n=i18n
+        )
         last_bot_message[user_id] = bot_response.message_id
