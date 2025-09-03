@@ -25,7 +25,7 @@ class AiService:
     ) -> BaseMessage:
         if history is None:
             history = []
-        system_intro = f"{SYSTEM_PROMPT}\nИнформация о игроке, которого ты любишь: {bio if bio else 'меня зовут игрок'}"
+        system_intro = f"{SYSTEM_PROMPT} Информация о игроке, которого ты любишь: {bio if bio else 'меня зовут игрок'}"
     
 
 
