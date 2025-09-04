@@ -20,7 +20,7 @@ class SendVoiceChannel(StatesGroup):
     wait_send_voice_channel = State()
 
 
-@router.message(StateFilter(None), Command("voice"))
+@router.message(Command("voice"))
 @inject
 async def voice(
     message: Message,
