@@ -26,7 +26,7 @@ class VoiceSettings(BaseModel):
 
 
 class UserSettings(BaseModel):
-    system_prompt: Optional[str] = Field(
+    player_prompt: Optional[str] = Field(
         default=None, max_length=500
     )
     is_blocked: bool = False
@@ -44,19 +44,6 @@ class UserSettings(BaseModel):
 
 
 class Statistics(BaseModel):
-    user_chars: int = Field(
-        default=0
-    )
-    mita_chars: int = Field(
-        default=0
-    )
-    user_time: List[constr] = Field(
-        default_factory=list
-    )
-
-    time_response: List[constr] = Field(
-        default_factory=list
-    )
     voice_use: List[constr] = Field(
         default_factory=list
     )
@@ -64,24 +51,12 @@ class Statistics(BaseModel):
         default_factory=list
     )
 
-    @field_validator("user_time", "time_response", "voice_use", "voice_recognition")
+    @field_validator("voice_recognition")
     def limit_list_length(cls, v):
         """Ограничитель длины спискв до 1000 символов"""
         if len(v) > 1000:
             return v[-1000:]  # оставляем последние 1000
         return v
-
-
-class TypeMessage(BaseModel):
-    type: str
-    content: str
-
-
-class UserMessageHistory(BaseModel):
-    messages: List[TypeMessage] = []
-    session_id: UUID = Field(
-        default=f"{uuid.uuid4()}"
-    )
 
 
 class User(Document):
@@ -94,9 +69,6 @@ class User(Document):
     )
     statistics: Statistics = Field(
         default_factory=Statistics
-    )
-    user_history: UserMessageHistory = Field(
-        default_factory=UserMessageHistory
     )
 
     class Settings:
