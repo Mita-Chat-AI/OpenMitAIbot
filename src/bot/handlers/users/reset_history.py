@@ -17,7 +17,7 @@ async def reset_history(
         Container.user_service
     ]
 ) -> None: 
-    await user_service.user_repository.clear_history(
+    await user_service.ai_service.clear_history(
         user_id=message.from_user.id
     )
 
