@@ -1,6 +1,6 @@
 from typing import Optional
 
-from ..db.models import TypeMessage, User
+from ..db.models import User
 from ..exeptions import SelectError
 
 
@@ -44,8 +44,20 @@ class UserRepository:
         bio: str
     ) -> None:
         user = await self.upsert(user_id=user_id)
-        user.settings.system_prompt = bio
+        user.settings.player_prompt = bio
         await user.save()
+
+    
+    async def get_bio(
+            self,
+            user_id: int
+    ) -> str:
+        user: User = self.upsert(
+            user_id=user_id
+        )
+        if user.settings.player_prompt:
+            return user.settings.player_prompt
+
 
     async def update_ban(
         self,
@@ -99,9 +111,7 @@ class UserRepository:
         user_id: int
     ) -> None:
         user = await self.upsert(user_id)
-        if user.user_history:
-            user.user_history.messages = []
-            await user.save()
+
 
     async def get_history(
         self,
