@@ -77,22 +77,22 @@ class UserRepository:
         await user.save()
         return user
 
-    async def update_message_history(
-        self,
-        user_id: int,
-        human: str,
-        ai: str
-    ) -> None:
-        user = await self.upsert(user_id)
+    # async def update_message_history(
+    #     self,
+    #     user_id: int,
+    #     human: str,
+    #     ai: str
+    # ) -> None:
+    #     user = await self.upsert(user_id)
 
-        def to_message(type_, content):
-            return TypeMessage(type=type_, content=content)
+    #     def to_message(type_, content):
+    #         return TypeMessage(type=type_, content=content)
 
-        user.user_history.messages.extend([
-            to_message("human", human),
-            to_message("ai", ai)
-        ])
-        await user.save()
+    #     user.user_history.messages.extend([
+    #         to_message("human", human),
+    #         to_message("ai", ai)
+    #     ])
+    #     await user.save()
 
     async def clear_history(
         self,
