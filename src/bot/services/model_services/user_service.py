@@ -72,13 +72,13 @@ class UserService(Service):
             user_id: int,
             text: str
     ) -> str:
-        # history = await self.user_repository.get_history(user_id)
-        # user = await self.get_data(user_id)
+        user = await self.get_data(user_id)
 
         ai_response = await self.ai_service.generate_response(
             user_id=user_id,
             session_id=user_id,
-            text=text
+            text=text,
+            player_prompt=user.settings.player_prompt if user.settings.player_prompt else None
             )
 
         # await self.user_repository.update_message_history(
