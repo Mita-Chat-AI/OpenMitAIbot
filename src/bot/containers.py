@@ -14,9 +14,9 @@ class Container(containers.DeclarativeContainer):
 
     ai_service = providers.Factory(
         AiService,
-        model=config.ai_config.model,
-        api_key=config.ai_config.api_key.get_secret_value(),
-        base_url=config.ai_config.base_url.get_secret_value()
+        # model=config.ai_config.model,
+        # api_key=config.ai_config.api_key.get_secret_value(),
+        # base_url=config.ai_config.base_url.get_secret_value()
     )
 
     user_service = providers.Factory(
