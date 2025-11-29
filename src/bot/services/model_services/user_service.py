@@ -81,11 +81,6 @@ class UserService(Service):
             player_prompt=user.settings.player_prompt if user.settings.player_prompt else None
             )
 
-        # await self.user_repository.update_message_history(
-        #         user_id=user_id,
-        #         human=text,
-        #         ai=ai_response.content
-        #     )
         return ai_response.content
     
     def get_env(self) -> Config:
