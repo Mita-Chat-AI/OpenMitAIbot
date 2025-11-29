@@ -21,7 +21,11 @@ from ..service import Service
 class UserService(Service):
     data: User | None
 
-    def __init__(self, user_repository: UserRepository, ai_service: AiService):
+    def __init__(
+            self,
+            user_repository: UserRepository,
+            ai_service: AiService
+    ) -> None:
         super().__init__()
         self.user_repository = user_repository
         self.ai_service = ai_service
@@ -47,25 +51,6 @@ class UserService(Service):
 
         self.data = user
         return user
-
-    def create_link(
-        self,
-        name: str,
-        id: Optional[int] = None,
-        username: Optional[str] = None
-    ) -> str:
-        
-        name = name.replace('>', '').replace('<', '')
-        print(f"name: {name}; id: {id}; username: {username}")
-        if id:
-            return f"<a href='tg://user?id={id}'>{name}</a>"
-        
-        elif username:
-            return f"<a href='https://t.me/{html.escape(username)}'>{name}</a>"
-        
-        else:
-            return name
-        
 
     async def ask_ai(
             self,
