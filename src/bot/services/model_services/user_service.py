@@ -57,16 +57,24 @@ class UserService(Service):
             user_id: int,
             text: str
     ) -> str:
-        user = await self.get_data(user_id)
+        try:
+            user = await self.get_data(user_id)
 
-        ai_response = await self.ai_service.generate_response(
-            user_id=user_id,
-            session_id=user_id,
-            text=text,
-            player_prompt=user.settings.player_prompt if user.settings.player_prompt else None
-            )
+            ai_response = await self.ai_service.generate_response(
+                user_id=user_id,
+                session_id=user_id,
+                text=text,
+                player_prompt=user.settings.player_prompt if user.settings.player_prompt else None
+                )
 
-        return ai_response.content
+            if not ai_response or not hasattr(ai_response, 'content'):
+                self.logger.warning(f"AI вернул пустой ответ для пользователя {user_id}")
+                return None
+                
+            return ai_response.content
+        except Exception as e:
+            self.logger.error(f"Ошибка при запросе к AI для пользователя {user_id}: {e}")
+            raise
     
     def get_env(self) -> Config:
         return config

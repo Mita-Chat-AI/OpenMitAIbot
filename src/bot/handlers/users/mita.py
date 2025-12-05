@@ -5,6 +5,7 @@ from aiogram.enums import ChatAction, ChatType, ContentType
 from aiogram.types import BufferedInputFile, Message
 from aiogram_i18n import I18nContext
 from dependency_injector.wiring import Provide, inject
+from loguru import logger
 from openai import APIConnectionError
 from typing import Optional
 from ...containers import Container
@@ -37,11 +38,24 @@ async def mita_handler(
             user_id=message.from_user.id,
             text=message.text
         )
-    except APIConnectionError:
+    except APIConnectionError as e:
+        logger.error(f"Ошибка подключения к AI API: {e}")
         await message.reply(
-            text=i18n.get('mita-no-response')
+            text=i18n.get('mita-connection-error')
         )
-        return
+        return None
+    except Exception as e:
+        logger.error(f"Ошибка при обработке сообщения: {e}")
+        error_msg = str(e).lower()
+        if "connection" in error_msg or "timeout" in error_msg:
+            await message.reply(
+                text=i18n.get('mita-connection-error')
+            )
+        else:
+            await message.reply(
+                text=i18n.get('mita-no-response')
+            )
+        return None
 
     if not msg:
         await message.reply(

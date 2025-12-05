@@ -1,4 +1,7 @@
 __pycache__
-,venv
+.venv
+venv
 uv.lock
 .env
+logs.log
+*.log

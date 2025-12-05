@@ -40,6 +40,15 @@ class AiConfig(BaseConfig):
     base_url: SecretStr
 
 
+class DbConfig(BaseConfig):
+    model_config = SettingsConfigDict(
+        env_prefix="db_"
+    )
+
+    url: str = Field(default="mongodb://localhost:27017")
+    name: str = Field(default="my_database")
+
+
 class Config(BaseSettings):
     telegram: AiogramConfig = Field(
         default_factory=AiogramConfig
@@ -49,6 +58,9 @@ class Config(BaseSettings):
     )
     ai_config: AiConfig = Field(
         default_factory=AiConfig
+    )
+    db: DbConfig = Field(
+        default_factory=DbConfig
     )
 
     @classmethod
