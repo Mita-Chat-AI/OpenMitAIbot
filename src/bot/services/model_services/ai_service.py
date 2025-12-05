@@ -1,7 +1,10 @@
 import asyncio
+from loguru import logger
 from agno.agent import Agent
 from agno.models.lmstudio import LMStudio
 from agno.db.mongo import MongoDb
+
+from ....settings.main import config
 
 
 SYSTEM_PROMPT = """
@@ -23,17 +26,16 @@ INST="""
 """
 
 
-db = MongoDb(
-    db_name="my_database",
-    db_url="mongodb://localhost:27017/"
-)
-
-
 def create_agent_for_user(
         user_id: int,
         session_id: int,
         player_prompt
 ) -> Agent:
+
+    db = MongoDb(
+        db_name=config.db.name,
+        db_url=config.db.url
+    )
 
     return Agent(
         model=LMStudio(id="CrazyMita"),
@@ -76,20 +78,27 @@ class AiService:
         text: str,
         player_prompt: str = None
     ) -> str:
+        try:
+            agent: Agent = create_agent_for_user(
+                user_id=user_id,
+                session_id=session_id,
+                player_prompt=player_prompt
+            )
 
-        agent: Agent = create_agent_for_user(
-            user_id=user_id,
-            session_id=session_id,
-            player_prompt=player_prompt
-        )
+            response = await asyncio.to_thread(
+                agent.run,
+                text,
+                session_id=session_id,
+            )
 
-        response = await asyncio.to_thread(
-            agent.run,
-            text,
-            session_id=session_id,
-        )
-
-        return response
+            if not response:
+                logger.warning(f"AI вернул пустой ответ для user_id={user_id}")
+                return None
+                
+            return response
+        except Exception as e:
+            logger.error(f"Ошибка в generate_response для user_id={user_id}: {e}")
+            raise
 
 
     async def clear_history(

@@ -52,11 +52,12 @@ class UserRepository:
             self,
             user_id: int
     ) -> str:
-        user: User = self.upsert(
+        user: User = await self.upsert(
             user_id=user_id
         )
         if user.settings.player_prompt:
             return user.settings.player_prompt
+        return ""
 
 
     async def update_ban(
@@ -85,7 +86,7 @@ class UserRepository:
         locale: str
     ) -> Optional[User]:
         user = await self.upsert(user_id)
-        user.locale = locale
+        user.settings.locale = locale
         await user.save()
         return user
 
