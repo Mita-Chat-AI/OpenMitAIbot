@@ -38,7 +38,11 @@ def create_agent_for_user(
     )
 
     return Agent(
-        model=LMStudio(id="CrazyMita"),
+        model=LMStudio(
+            id=config.ai_config.model,
+            api_key=config.ai_config.api_key.get_secret_value(),
+            base_url=config.ai_config.base_url.get_secret_value()
+        ),
 
         name="Безумная Мита",
         description=SYSTEM_PROMPT,
