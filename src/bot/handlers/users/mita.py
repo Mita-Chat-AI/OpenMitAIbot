@@ -27,6 +27,8 @@ async def mita_handler(
         Container.user_service
     ]
 ) -> Optional[Message] | None:
+    
+    logger.info(f"📩 Получено сообщение от {message.from_user.id}: {message.text}")
 
     await bot.send_chat_action(
         chat_id=message.chat.id,
@@ -34,10 +36,12 @@ async def mita_handler(
     )
 
     try:
+        logger.info(f"🤖 Отправляю запрос к AI...")
         msg = await user_service.ask_ai(
             user_id=message.from_user.id,
             text=message.text
         )
+        logger.info(f"✅ Получен ответ от AI: {msg[:50] if msg else 'None'}...")
     except APIConnectionError as e:
         logger.error(f"Ошибка подключения к AI API: {e}")
         await message.reply(
