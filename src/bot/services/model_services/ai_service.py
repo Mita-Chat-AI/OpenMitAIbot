@@ -1,4 +1,5 @@
 import asyncio
+import os
 from loguru import logger
 from agno.agent import Agent
 from agno.models.lmstudio import LMStudio
@@ -37,12 +38,24 @@ def create_agent_for_user(
         db_url=config.db.url
     )
 
+    # Проверяем наличие прокси в переменных окружения
+    proxy_url = os.getenv("HTTPS_PROXY") or os.getenv("HTTP_PROXY")
+    
+    model_kwargs = {
+        "id": config.ai_config.model,
+        "api_key": config.ai_config.api_key.get_secret_value(),
+        "base_url": config.ai_config.base_url.get_secret_value()
+    }
+    
+    # Если прокси настроен, добавляем его в параметры модели
+    if proxy_url:
+        model_kwargs["http_client_kwargs"] = {"proxies": proxy_url}
+        logger.info(f"🔒 Используется прокси: {proxy_url}")
+    else:
+        logger.warning("⚠️ Прокси не настроен - запросы идут напрямую")
+
     return Agent(
-        model=LMStudio(
-            id=config.ai_config.model,
-            api_key=config.ai_config.api_key.get_secret_value(),
-            base_url=config.ai_config.base_url.get_secret_value()
-        ),
+        model=LMStudio(**model_kwargs),
 
         name="Безумная Мита",
         description=SYSTEM_PROMPT,
