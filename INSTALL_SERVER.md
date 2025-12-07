@@ -30,27 +30,38 @@ pip install -r pyproject.toml
 uv sync
 ```
 
-### Шаг 3: Создать виртуальное окружение для RVC
+### Шаг 3: RVC (ОПЦИОНАЛЬНО) - только если нужен голос Миты
+
+**⚠️ ВАЖНО:** RVC требует Python 3.10 или 3.11! Python 3.12 не поддерживает старую версию numpy.
+
+**Если RVC не нужен - пропустите этот шаг. Бот будет работать без него.**
+
+#### Вариант A: Использовать Python 3.10 для RVC
 
 ```bash
 cd /path/to/OpenMitAIbot/rvc_service
 
-# Создать виртуальное окружение
-python3 -m venv venv
+# Установить Python 3.10 (если нет)
+sudo apt install python3.10 python3.10-venv python3.10-dev
+
+# Создать виртуальное окружение с Python 3.10
+python3.10 -m venv venv
 
 # Активировать
 source venv/bin/activate
 
-# ⚠️ ВАЖНО: Установить build tools для Python 3.12
+# Установить build tools
 pip install --upgrade pip setuptools wheel
 
 # Установить зависимости
 pip install -r requirements.txt
 ```
 
-**Примечание:** 
-- Установка может занять 10-15 минут из-за больших зависимостей (torch, fairseq и т.д.)
-- Для Python 3.12 требуется `setuptools` для компиляции старых версий numpy
+#### Вариант B: Отключить RVC (рекомендуется)
+
+Просто не настраивайте `API_RVC` в `.env` - бот будет работать без RVC, используя только Edge TTS.
+
+**Примечание:** Установка RVC может занять 10-15 минут из-за больших зависимостей (torch, fairseq и т.д.)
 
 ### Шаг 4: Загрузить модели
 

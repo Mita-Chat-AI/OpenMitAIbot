@@ -71,8 +71,8 @@ def create_agent_for_user(
         
 
         enable_user_memories=False,          # отключено, чтобы не было багов с memory tool
-        enable_session_summaries=True,       # включаем суммирование
-        add_session_summary_to_context=True, # подмешивать summary в контекст
+        enable_session_summaries=False,       # отключено из-за проблем с Groq API (json_schema)
+        add_session_summary_to_context=False, # отключено
 
         add_datetime_to_context=False,
         additional_context={
