@@ -58,14 +58,18 @@ if [ -d "venv" ]; then
 else
     echo "⚠️  Виртуальное окружение не найдено!"
     echo "Создайте его: python3 -m venv venv"
-    echo "Затем установите зависимости: pip install -r requirements.txt"
+    echo "Затем установите зависимости:"
+    echo "  pip install --upgrade pip setuptools wheel"
+    echo "  pip install -r requirements.txt"
     exit 1
 fi
 
 # Проверяем наличие uvicorn
 if ! command -v uvicorn &> /dev/null; then
     echo "❌ [ОШИБКА] uvicorn не найден!"
-    echo "Установите: pip install uvicorn[standard]"
+    echo "Установите:"
+    echo "  pip install --upgrade pip setuptools wheel"
+    echo "  pip install -r requirements.txt"
     exit 1
 fi
 

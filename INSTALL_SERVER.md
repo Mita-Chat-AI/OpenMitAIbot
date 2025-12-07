@@ -41,11 +41,16 @@ python3 -m venv venv
 # Активировать
 source venv/bin/activate
 
+# ⚠️ ВАЖНО: Установить build tools для Python 3.12
+pip install --upgrade pip setuptools wheel
+
 # Установить зависимости
 pip install -r requirements.txt
 ```
 
-**Примечание:** Установка может занять 10-15 минут из-за больших зависимостей (torch, fairseq и т.д.)
+**Примечание:** 
+- Установка может занять 10-15 минут из-за больших зависимостей (torch, fairseq и т.д.)
+- Для Python 3.12 требуется `setuptools` для компиляции старых версий numpy
 
 ### Шаг 4: Загрузить модели
 
@@ -140,11 +145,33 @@ sudo journalctl -u mitaibot -f
 
 **Решение:** Используйте виртуальное окружение (см. выше)
 
+### Ошибка: "No module named 'distutils'"
+
+**Решение:** Установите setuptools перед установкой зависимостей:
+
+```bash
+source venv/bin/activate
+pip install --upgrade pip setuptools wheel
+pip install -r requirements.txt
+```
+
 ### Ошибка: "fairseq не компилируется"
 
 ```bash
 sudo apt install build-essential
 pip install fairseq --no-build-isolation
+```
+
+### Ошибка: "numpy не компилируется"
+
+**Решение:** Убедитесь что установлены build tools:
+
+```bash
+sudo apt install build-essential python3-dev
+source venv/bin/activate
+pip install --upgrade pip setuptools wheel
+pip install numpy==1.23.5  # Установить отдельно
+pip install -r requirements.txt
 ```
 
 ### Ошибка: "модель не найдена"
