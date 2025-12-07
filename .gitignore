@@ -5,3 +5,22 @@ uv.lock
 .env
 logs.log
 *.log
+*.log.*
+
+# Кэши и временные файлы
+.cache/
+*.cache
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# RVC модели (не должны быть в репозитории - слишком большие!)
+Miaea/
+*.pth
+*.index
+*.pkl
+*.bin
+*.h5
+*.ckpt
+*.safetensors
