@@ -46,14 +46,44 @@ def create_agent_for_user(
     else:
         logger.warning("⚠️ Прокси не настроен - запросы идут напрямую")
 
-    # LMStudio использует httpx внутри, который автоматически подхватывает
-    # переменные окружения HTTP_PROXY и HTTPS_PROXY
+    # Выбираем модель в зависимости от провайдера
+    provider = config.ai_config.provider.lower()
+    api_key = config.ai_config.api_key.get_secret_value()
+    base_url = config.ai_config.base_url.get_secret_value()
+    model_name = config.ai_config.model
+    
+    # LMStudio поддерживает OpenAI-совместимые API, включая Minimax и OpenAI
+    # Используем его для всех провайдеров
+    if provider == "minimax":
+        # Minimax использует OpenAI-совместимый API
+        # Base URL должен быть https://api.minimax.chat/v1
+        # API Key - это JWT токен
+        minimax_base_url = base_url if base_url else "https://api.minimax.chat/v1"
+        logger.info(f"🔧 Используется Minimax API: {minimax_base_url}, модель: {model_name}")
+        model = LMStudio(
+            id=model_name,
+            api_key=api_key,
+            base_url=minimax_base_url
+        )
+    elif provider == "openai":
+        # OpenAI API через LMStudio (OpenAI-совместимый)
+        logger.info(f"🔧 Используется OpenAI API: {base_url}, модель: {model_name}")
+        model = LMStudio(
+            id=model_name,
+            api_key=api_key,
+            base_url=base_url
+        )
+    else:
+        # По умолчанию LMStudio
+        logger.info(f"🔧 Используется LMStudio API: {base_url}, модель: {model_name}")
+        model = LMStudio(
+            id=model_name,
+            api_key=api_key,
+            base_url=base_url
+        )
+    
     return Agent(
-        model=LMStudio(
-            id=config.ai_config.model,
-            api_key=config.ai_config.api_key.get_secret_value(),
-            base_url=config.ai_config.base_url.get_secret_value()
-        ),
+        model=model,
 
         name="Безумная Мита",
         description=SYSTEM_PROMPT,
@@ -71,8 +101,8 @@ def create_agent_for_user(
         
 
         enable_user_memories=False,          # отключено, чтобы не было багов с memory tool
-        enable_session_summaries=False,       # отключено из-за проблем с Groq API (json_schema)
-        add_session_summary_to_context=False, # отключено
+        enable_session_summaries=True,       # включаем суммирование
+        add_session_summary_to_context=True, # подмешивать summary в контекст
 
         add_datetime_to_context=False,
         additional_context={

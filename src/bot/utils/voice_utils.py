@@ -48,21 +48,41 @@ async def generate_edge_tts(
         ...     rate="+10%"
         ... )
     """
+    if not text or len(text.strip()) == 0:
+        logger.error("Edge TTS: пустой текст для генерации")
+        return None
+    
     try:
-        # Создаём communicate объект
-        communicate = edge_tts.Communicate(
-            text=text,
-            voice=voice,
-            rate=rate,
-            pitch=pitch
-        )
+        # Проверяем и нормализуем параметры
+        # Edge TTS может не поддерживать некоторые значения pitch, пробуем без pitch если ошибка
+        try:
+            communicate = edge_tts.Communicate(
+                text=text,
+                voice=voice,
+                rate=rate,
+                pitch=pitch
+            )
+        except Exception as pitch_error:
+            logger.warning(f"Edge TTS: ошибка с pitch={pitch}, пробуем без pitch: {pitch_error}")
+            # Пробуем без pitch
+            communicate = edge_tts.Communicate(
+                text=text,
+                voice=voice,
+                rate=rate
+            )
         
         # Собираем аудио в буфер
         audio_buffer = BytesIO()
+        has_audio = False
         
         async for chunk in communicate.stream():
             if chunk["type"] == "audio":
                 audio_buffer.write(chunk["data"])
+                has_audio = True
+        
+        if not has_audio:
+            logger.error("Edge TTS: не получено аудио данных (No audio was received)")
+            return None
         
         audio_buffer.seek(0)
         result = audio_buffer.read()
@@ -112,8 +132,14 @@ def map_pitch_int_to_hz(pitch_int: int) -> str:
     # Конвертируем: 0-20 -> -10Hz до +10Hz
     # 10 = 0Hz, 0 = -10Hz, 20 = +10Hz
     hz_value = (pitch_int - 10) * 1  # 1 Hz на единицу
-    sign = "+" if hz_value >= 0 else ""
-    return f"{sign}{hz_value}Hz"
+    
+    # Edge TTS требует формат с знаком: "+0Hz" или "-5Hz"
+    if hz_value == 0:
+        return "+0Hz"
+    elif hz_value > 0:
+        return f"+{hz_value}Hz"
+    else:
+        return f"{hz_value}Hz"  # Отрицательные уже со знаком "-"
 
 
 async def get_available_voices(language_filter: str = "ru") -> list[dict]:

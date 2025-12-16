@@ -42,6 +42,11 @@ async def mita_handler(
             text=message.text
         )
         logger.info(f"✅ Получен ответ от AI: {msg[:50] if msg else 'None'}...")
+    except ValueError as e:
+        # Ошибка проверки токенов/времени
+        logger.warning(f"Ошибка проверки токенов/времени: {e}")
+        await message.reply(text=str(e))
+        return None
     except APIConnectionError as e:
         logger.error(f"Ошибка подключения к AI API: {e}")
         await message.reply(
@@ -70,24 +75,46 @@ async def mita_handler(
     user = await user_service.get_data(
         search_argument=message.from_user.id
     )
+    
+    # Автоматически включаем voice_mode если настроено в конфиге
+    from ....settings.main import config
+    if config.voice_config.voice_mode_enabled and not user.settings.voice_mode:
+        user.settings.voice_mode = True
+        await user.save()
+        logger.info(f"Автоматически включен voice_mode для пользователя {message.from_user.id}")
 
     if user.settings.voice_mode:
         await bot.send_chat_action(
             chat_id=message.chat.id,
             action=ChatAction.RECORD_VOICE
         )
-        voice_buffer = await user_service.edge_voice_generate(
-            user_id=message.from_user.id,
-            text=msg
-        )
-
-        result = await message.reply_voice(
-            voice=BufferedInputFile(
-                file=voice_buffer,
-                filename='voice.mp3'
+        try:
+            voice_buffer = await user_service.edge_voice_generate(
+                user_id=message.from_user.id,
+                text=msg
             )
-        )
-        return result
+            
+            if not voice_buffer:
+                logger.error("Не удалось сгенерировать голосовое сообщение")
+                # Fallback: отправляем текстом
+                result = await message.reply(text=msg)
+                return result
+            
+            logger.info(f"Голосовое сообщение сгенерировано: {len(voice_buffer)} байт")
+            
+            result = await message.reply_voice(
+                voice=BufferedInputFile(
+                    file=voice_buffer,
+                    filename='voice.ogg'  # Telegram предпочитает OGG
+                )
+            )
+            logger.success("Голосовое сообщение отправлено успешно")
+            return result
+        except Exception as e:
+            logger.error(f"Ошибка при отправке голосового сообщения: {e}")
+            # Fallback: отправляем текстом
+            result = await message.reply(text=msg)
+            return result
 
     result = await message.reply(
         text=msg

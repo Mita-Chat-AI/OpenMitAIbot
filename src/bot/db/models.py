@@ -1,5 +1,6 @@
 import re
 import uuid
+from datetime import datetime, timedelta
 from typing import List, Optional, Pattern, Type
 from uuid import UUID
 
@@ -19,11 +20,34 @@ class Edge_TTS(BaseModel):
     )
 
 
+class MinimaxVoice(BaseModel):
+    """Настройки для Minimax Voice Clone API"""
+    voice_id: Optional[str] = Field(default=None)  # ID клонированного голоса
+    file_id: Optional[str] = Field(default=None)  # file_id промпт-аудио
+    prompt_audio_file_id: Optional[str] = Field(default=None)  # file_id промпт-аудио для клонирования
+    prompt_text: Optional[str] = Field(default="This voice sounds natural and pleasant.")  # Текст промпта
+    model: str = Field(default="speech-2.6-hd")  # Модель для генерации
+    need_noise_reduction: bool = Field(default=False)
+    need_volumn_normalization: bool = Field(default=False)
+    enabled: bool = Field(default=False)  # Использовать Minimax Voice Clone вместо Edge TTS
+
+
 class VoiceSettings(BaseModel):
     edge_tts: Edge_TTS = Field(
         default_factory=Edge_TTS
     )
+    minimax_voice: MinimaxVoice = Field(
+        default_factory=MinimaxVoice
+    )
 
+
+class Subscription(BaseModel):
+    """Модель подписки пользователя"""
+    type: int = Field(default=0)  # 0 - нет подписки, 1 - недельная, 2 - месячная
+    tokens: int = Field(default=0)  # Оставшиеся токены
+    expires_at: Optional[datetime] = Field(default=None)  # Дата истечения подписки
+    created_at: Optional[datetime] = Field(default=None)  # Дата создания подписки
+    phone_number: Optional[str] = Field(default=None, max_length=20)  # Номер телефона
 
 class UserSettings(BaseModel):
     player_prompt: Optional[str] = Field(
@@ -31,7 +55,7 @@ class UserSettings(BaseModel):
     )
     is_blocked: bool = False
     is_history: bool = True
-    voice_mode: bool = False
+    voice_mode: bool = True  # По умолчанию включен для всех
     locale: str = Field(
         default="ru"
     )
@@ -41,6 +65,11 @@ class UserSettings(BaseModel):
     subscribe: int = Field(
         default=0
     )
+    subscription: Subscription = Field(
+        default_factory=Subscription
+    )
+    last_request_time: Optional[datetime] = Field(default=None)  # Время последнего запроса
+    min_request_interval: int = Field(default=2)  # Минимальный интервал между запросами в секундах
 
 
 class Statistics(BaseModel):

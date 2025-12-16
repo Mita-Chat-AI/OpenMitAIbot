@@ -1,7 +1,12 @@
 import asyncio
 import html
+import warnings
+from datetime import datetime, timedelta
 from io import BytesIO
 from typing import Optional, Union
+
+# Подавляем предупреждение о ffmpeg/avconv от pydub ДО импорта
+warnings.filterwarnings("ignore", message=".*Couldn't find ffmpeg or avconv.*", category=RuntimeWarning)
 
 import aiohttp
 import numpy as np
@@ -21,6 +26,7 @@ from ...utils.voice_utils import (
     map_person_to_voice,
     map_pitch_int_to_hz
 )
+from ...utils.minimax_voice import generate_minimax_voice
 from ..model_services.ai_service import AiService
 from ..service import Service
 
@@ -59,6 +65,65 @@ class UserService(Service):
         self.data = user
         return user
 
+    async def check_tokens_and_time(
+            self,
+            user: User
+    ) -> tuple[bool, Optional[str]]:
+        """
+        Проверяет наличие токенов и минимальное время между запросами.
+        Возвращает (можно_отправить, сообщение_об_ошибке)
+        """
+        now = datetime.now()
+        
+        # Проверка минимального времени между запросами
+        if user.settings.last_request_time:
+            time_diff = (now - user.settings.last_request_time).total_seconds()
+            min_interval = user.settings.min_request_interval
+            
+            if time_diff < min_interval:
+                remaining = min_interval - time_diff
+                return False, f"⏳ Подожди еще {remaining:.1f} секунд перед следующим запросом..."
+        
+        # Проверка подписки и токенов
+        subscription = user.settings.subscription
+        
+        # Если подписка истекла, сбрасываем её
+        if subscription.expires_at and subscription.expires_at < now:
+            subscription.type = 0
+            subscription.tokens = 0
+            subscription.expires_at = None
+            await user.save()
+            return False, "💔 Твоя подписка истекла. Оформи новую подписку, чтобы продолжить общение!"
+        
+        # Если нет активной подписки
+        if subscription.type == 0 or subscription.tokens <= 0:
+            return False, "💎 У тебя нет активной подписки или закончились токены. Оформи подписку, чтобы общаться со мной!"
+        
+        # Проверяем, достаточно ли токенов для запроса
+        tokens_needed = config.ai_config.tokens_per_request
+        if subscription.tokens < tokens_needed:
+            return False, f"💎 У тебя недостаточно токенов. Нужно {tokens_needed}, осталось {subscription.tokens}."
+        
+        return True, None
+    
+    async def consume_tokens(
+            self,
+            user: User,
+            tokens_used: Optional[int] = None
+    ) -> None:
+        """Списывает токены после запроса"""
+        if tokens_used is None:
+            tokens_used = config.ai_config.tokens_per_request
+        
+        subscription = user.settings.subscription
+        subscription.tokens = max(0, subscription.tokens - tokens_used)
+        
+        # Обновляем время последнего запроса
+        user.settings.last_request_time = datetime.now()
+        
+        await user.save()
+        self.logger.info(f"Списано {tokens_used} токенов у пользователя {user.user_id}. Осталось: {subscription.tokens}")
+
     async def ask_ai(
             self,
             user_id: int,
@@ -66,6 +131,11 @@ class UserService(Service):
     ) -> str:
         try:
             user = await self.get_data(user_id)
+            
+            # Проверяем токены и время
+            can_proceed, error_msg = await self.check_tokens_and_time(user)
+            if not can_proceed:
+                raise ValueError(error_msg)
 
             ai_response = await self.ai_service.generate_response(
                 user_id=user_id,
@@ -77,8 +147,14 @@ class UserService(Service):
             if not ai_response or not hasattr(ai_response, 'content'):
                 self.logger.warning(f"AI вернул пустой ответ для пользователя {user_id}")
                 return None
+            
+            # Списываем токены после успешного запроса
+            await self.consume_tokens(user)
                 
             return ai_response.content
+        except ValueError as e:
+            # Это ошибка проверки токенов/времени - пробрасываем дальше
+            raise
         except Exception as e:
             self.logger.error(f"Ошибка при запросе к AI для пользователя {user_id}: {e}")
             raise
@@ -94,15 +170,185 @@ class UserService(Service):
             text: str
     ) -> bytes:
         """
-        Генерирует голосовое сообщение через Edge TTS.
+        Генерирует голосовое сообщение.
         
-        Использует библиотеку edge-tts напрямую (без внешнего API).
-        Поддерживает fallback на внешний API если библиотека недоступна.
+        Приоритет:
+        1. Minimax Voice Clone (если включен)
+        2. Edge TTS (библиотека)
+        3. Edge TTS (внешний API)
         """
         self.logger.info(f"Попытка записи голосового сообщения для {user_id} : {text}")
 
         user = await self.get_data(search_argument=user_id)
         
+        # Проверяем, включен ли Minimax Voice Clone
+        minimax_voice = user.voice_settings.minimax_voice
+        
+        # Автоматически подставляем voice_id из конфига, если у пользователя его нет
+        if not minimax_voice.voice_id and self.config.voice_config.minimax_voice_id:
+            # Очищаем от пробелов и лишних символов
+            config_value = self.config.voice_config.minimax_voice_id.strip()
+            if config_value.startswith('"') and config_value.endswith('"'):
+                config_value = config_value[1:-1].strip()
+            if config_value.startswith("'") and config_value.endswith("'"):
+                config_value = config_value[1:-1].strip()
+            
+            # ВАЖНО: voice_id может быть любым (даже начинаться с "moss_audio_")
+            # API может возвращать voice_id который выглядит как file_id
+            # Просто используем то, что указано, если оно валидное (начинается с буквы)
+            
+            # Проверяем валидность: должен начинаться с буквы
+            if config_value and len(config_value) > 0 and config_value[0].isalpha():
+                minimax_voice.voice_id = config_value
+                minimax_voice.enabled = True
+                await user.save()
+                self.logger.info(f"✅ Применен voice_id из конфига: {config_value[:30]}...")
+            else:
+                self.logger.error(f"❌ Невалидный формат в API_MINIMAX_VOICE_ID: {config_value}")
+        
+        # Диагностика настроек Minimax Voice
+        self.logger.debug(
+            f"Minimax Voice настройки для {user_id}: "
+            f"enabled={minimax_voice.enabled}, "
+            f"voice_id={minimax_voice.voice_id}, "
+            f"model={minimax_voice.model}"
+        )
+        
+        # Используем Minimax Voice если включен и есть voice_id
+        if minimax_voice.enabled and minimax_voice.voice_id:
+            self.logger.info(f"Используется Minimax Voice Clone (voice_id: {minimax_voice.voice_id})")
+            try:
+                # Используем только voice_id
+                voice_bytes = await generate_minimax_voice(
+                    text=text,
+                    voice_id=minimax_voice.voice_id,
+                    file_id=None,
+                    prompt_audio_file_id=None,
+                    prompt_text=None,
+                    model=minimax_voice.model,
+                    need_noise_reduction=minimax_voice.need_noise_reduction,
+                    need_volumn_normalization=minimax_voice.need_volumn_normalization,
+                    api_key=self.config.ai_config.api_key.get_secret_value()
+                )
+                
+                if voice_bytes:
+                    self.logger.success(f"✅ Minimax Voice Clone: {len(voice_bytes)} байт")
+                    # Проверяем формат аудио от Minimax
+                    audio_format = self._detect_audio_format(voice_bytes)
+                    self.logger.info(f"Формат аудио от Minimax: {audio_format}")
+                    
+                    # Конвертируем в OGG для Telegram если нужно
+                    if audio_format != "ogg":
+                        try:
+                            # Пробуем через soundfile (не требует ffmpeg)
+                            try:
+                                import soundfile as sf
+                                import numpy as np
+                                
+                                # Читаем аудио
+                                audio_buffer = BytesIO(voice_bytes)
+                                samples, samplerate = sf.read(audio_buffer, dtype='float32')
+                                
+                                # Если стерео, конвертируем в моно
+                                if len(samples.shape) > 1:
+                                    samples = samples.mean(axis=1)
+                                
+                                # Сохраняем в OGG
+                                ogg_buffer = BytesIO()
+                                sf.write(ogg_buffer, samples, samplerate, format='OGG', subtype='VORBIS')
+                                ogg_buffer.seek(0)
+                                voice_bytes = ogg_buffer.read()
+                                self.logger.info(f"Аудио конвертировано в OGG через soundfile: {len(voice_bytes)} байт")
+                            except Exception as sf_error:
+                                # Fallback: пробуем через pydub (требует ffmpeg)
+                                self.logger.debug(f"soundfile не сработал: {sf_error}, пробуем pydub")
+                                try:
+                                    # Подавляем предупреждение о ffmpeg
+                                    with warnings.catch_warnings():
+                                        warnings.filterwarnings("ignore", message=".*Couldn't find ffmpeg or avconv.*", category=RuntimeWarning)
+                                        audio_segment = AudioSegment.from_file(BytesIO(voice_bytes))
+                                        ogg_buffer = BytesIO()
+                                        audio_segment.export(ogg_buffer, format="ogg", codec="libvorbis")
+                                        ogg_buffer.seek(0)
+                                        voice_bytes = ogg_buffer.read()
+                                        self.logger.info(f"Аудио конвертировано в OGG через pydub: {len(voice_bytes)} байт")
+                                except Exception as pydub_error:
+                                    self.logger.warning(f"pydub тоже не сработал: {pydub_error}, используем исходный формат")
+                                    raise
+                        except Exception as e:
+                            self.logger.warning(f"Не удалось конвертировать в OGG: {e}, используем исходный формат")
+                            # Если не удалось конвертировать, пробуем отправить как есть
+                            # Telegram поддерживает MP3, WAV, OGG
+                    
+                    # Применяем RVC если нужно
+                    processed = await self.apply_rvc_remote(voice_bytes)
+                    return processed
+                else:
+                    # Если voice_id не сработал, возможно это был file_id
+                    # Пробуем получить voice_id из file_id (только если выглядит как file_id)
+                    if minimax_voice.voice_id and minimax_voice.voice_id.startswith("moss_audio_"):
+                        self.logger.info(f"🔍 voice_id не сработал, возможно это file_id. Пробуем получить voice_id...")
+                        try:
+                            from ...utils.minimax_voice import create_voice_from_file_id
+                            new_voice_id = await create_voice_from_file_id(
+                                file_id=minimax_voice.voice_id,
+                                prompt_audio_file_id=minimax_voice.voice_id,
+                                prompt_text="This voice sounds natural and pleasant.",
+                                model=minimax_voice.model
+                            )
+                            if new_voice_id:
+                                minimax_voice.voice_id = new_voice_id
+                                await user.save()
+                                self.logger.success(f"✅ Получен voice_id из file_id: {new_voice_id[:30]}...")
+                                # Пробуем снова с новым voice_id
+                                voice_bytes = await generate_minimax_voice(
+                                    text=text,
+                                    voice_id=new_voice_id,
+                                    file_id=None,
+                                    prompt_audio_file_id=None,
+                                    prompt_text=None,
+                                    model=minimax_voice.model,
+                                    need_noise_reduction=minimax_voice.need_noise_reduction,
+                                    need_volumn_normalization=minimax_voice.need_volumn_normalization,
+                                    api_key=self.config.ai_config.api_key.get_secret_value()
+                                )
+                                if voice_bytes:
+                                    self.logger.success(f"✅ Minimax Voice Clone: {len(voice_bytes)} байт")
+                                    # Обрабатываем аудио (конвертация, RVC и т.д.)
+                                    audio_format = self._detect_audio_format(voice_bytes)
+                                    # Конвертируем в OGG если нужно
+                                    if audio_format != "ogg":
+                                        try:
+                                            import soundfile as sf
+                                            import numpy as np
+                                            audio_buffer = BytesIO(voice_bytes)
+                                            samples, samplerate = sf.read(audio_buffer, dtype='float32')
+                                            if len(samples.shape) > 1:
+                                                samples = samples.mean(axis=1)
+                                            ogg_buffer = BytesIO()
+                                            sf.write(ogg_buffer, samples, samplerate, format='OGG', subtype='VORBIS')
+                                            ogg_buffer.seek(0)
+                                            voice_bytes = ogg_buffer.read()
+                                        except:
+                                            pass
+                                    processed = await self.apply_rvc_remote(voice_bytes)
+                                    return processed
+                        except Exception as e:
+                            self.logger.error(f"❌ Ошибка при получении voice_id из file_id: {e}")
+                    
+                    self.logger.warning("Minimax Voice Clone вернул пустой результат, пробуем Edge TTS...")
+            except Exception as e:
+                self.logger.error(f"Ошибка при использовании Minimax Voice Clone: {e}, пробуем Edge TTS...")
+                import traceback
+                self.logger.debug(f"Трассировка ошибки Minimax Voice: {traceback.format_exc()}")
+        else:
+            # Логируем почему Minimax Voice не используется (только если действительно не настроен)
+            if not minimax_voice.enabled:
+                self.logger.debug(f"Minimax Voice отключен для пользователя {user_id}, используем Edge TTS")
+            elif not minimax_voice.voice_id and not self.config.voice_config.minimax_voice_id:
+                self.logger.debug(f"Minimax Voice не настроен для пользователя {user_id}, используем Edge TTS")
+        
+        # Fallback на Edge TTS
         # Получаем настройки голоса
         voice_person = user.voice_settings.edge_tts.person or "CrazyMita"
         voice_rate = user.voice_settings.edge_tts.rate or "+10%"
@@ -132,10 +378,11 @@ class UserService(Service):
         
         # Fallback: пробуем внешний API если библиотека не работает
         if not voice_bytes:
-            edge_tts_url = self.config.voice_config.edge_tts.get_secret_value()
-            if edge_tts_url and edge_tts_url != "":
+            edge_tts_secret = self.config.voice_config.edge_tts
+            edge_tts_url = edge_tts_secret.get_secret_value() if edge_tts_secret else None
+            if edge_tts_url and edge_tts_url != "" and edge_tts_url != "your_edge_tts_api_url":
                 try:
-                    self.logger.info("Пробуем Edge TTS через внешний API...")
+                    self.logger.info(f"Пробуем Edge TTS через внешний API: {edge_tts_url}")
                     async with aiohttp.ClientSession() as session:
                         async with session.post(
                             url=edge_tts_url,
@@ -147,21 +394,29 @@ class UserService(Service):
                             },
                             headers={
                                 'Content-type': 'application/json'
-                            }
+                            },
+                            timeout=aiohttp.ClientTimeout(total=10)
                         ) as response:
 
                             if response.status != 200:
-                                self.logger.error(f"Edge TTS API вернул ошибку: {await response.text()}")
-                                return None
-
-                            voice_bytes = await response.read()
-                            self.logger.success(f"✅ Edge TTS (API): {len(voice_bytes)} байт")
+                                error_text = await response.text()
+                                self.logger.warning(f"Edge TTS API вернул ошибку {response.status}: {error_text}")
+                                voice_bytes = None
+                            else:
+                                voice_bytes = await response.read()
+                                if voice_bytes:
+                                    self.logger.success(f"✅ Edge TTS (API): {len(voice_bytes)} байт")
+                                else:
+                                    self.logger.warning("Edge TTS API вернул пустой ответ")
+                                    voice_bytes = None
+                except aiohttp.ClientError as e:
+                    self.logger.warning(f"Не удалось подключиться к Edge TTS API ({edge_tts_url}): {e}")
+                    voice_bytes = None
                 except Exception as e:
-                    self.logger.error(f"Не удалось записать голосовое через API для {user_id} : {e}")
-                    return None
+                    self.logger.warning(f"Ошибка при обращении к Edge TTS API: {e}")
+                    voice_bytes = None
             else:
-                self.logger.error("Edge TTS библиотека недоступна и API URL не указан")
-                return None
+                self.logger.debug("Edge TTS API URL не указан или пустой, пропускаем")
         
         if not voice_bytes:
             self.logger.error("Не удалось получить аудио от Edge TTS")
