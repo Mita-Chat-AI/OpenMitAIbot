@@ -78,7 +78,7 @@ async def voice(
     await message.reply_voice(
         voice=BufferedInputFile(
             file=voice_buffer,
-            filename='voice.ogg',  # OGG формат после обработки
+            filename='voice.mp3',
         ),
         reply_markup=kb.as_markup()
     )
@@ -121,7 +121,7 @@ async def send_voice_channel(
 
         msg = await bot.send_voice(
             chat_id=channel_id,
-            voice=BufferedInputFile(voice_data, filename="voice.ogg"),  # OGG формат
+            voice=BufferedInputFile(voice_data, filename="voice.mp3"),
             caption=f"{text}\n{call.from_user.mention_html()}"
         )
 

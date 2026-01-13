@@ -29,7 +29,6 @@ class VoiceConfig(BaseConfig):
     )
 
     edge_tts: SecretStr
-    rvc: SecretStr | None = None
 
 class AiConfig(BaseConfig):
     model_config = SettingsConfigDict(
