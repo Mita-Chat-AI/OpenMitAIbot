@@ -20,24 +20,9 @@ class Edge_TTS(BaseModel):
     )
 
 
-class MinimaxVoice(BaseModel):
-    """Настройки для Minimax Voice Clone API"""
-    voice_id: Optional[str] = Field(default=None)  # ID клонированного голоса
-    file_id: Optional[str] = Field(default=None)  # file_id промпт-аудио
-    prompt_audio_file_id: Optional[str] = Field(default=None)  # file_id промпт-аудио для клонирования
-    prompt_text: Optional[str] = Field(default="This voice sounds natural and pleasant.")  # Текст промпта
-    model: str = Field(default="speech-2.6-hd")  # Модель для генерации
-    need_noise_reduction: bool = Field(default=False)
-    need_volumn_normalization: bool = Field(default=False)
-    enabled: bool = Field(default=False)  # Использовать Minimax Voice Clone вместо Edge TTS
-
-
 class VoiceSettings(BaseModel):
     edge_tts: Edge_TTS = Field(
         default_factory=Edge_TTS
-    )
-    minimax_voice: MinimaxVoice = Field(
-        default_factory=MinimaxVoice
     )
 
 

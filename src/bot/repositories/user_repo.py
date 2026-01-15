@@ -15,12 +15,6 @@ class UserRepository:
 
         if not user:
             user = User(user_id=user_id)
-            # Автоматически настраиваем Minimax Voice для нового пользователя
-            if config.voice_config.minimax_voice_enabled:
-                user.voice_settings.minimax_voice.enabled = True
-                # Автоматически подставляем voice_id из конфига, если указан
-                if config.voice_config.minimax_voice_id:
-                    user.voice_settings.minimax_voice.voice_id = config.voice_config.minimax_voice_id
             # Автоматически включаем voice_mode для нового пользователя
             if config.voice_config.voice_mode_enabled:
                 user.settings.voice_mode = True
@@ -184,37 +178,3 @@ class UserRepository:
             "phone_number": sub.phone_number,
             "min_request_interval": user.settings.min_request_interval
         }
-
-    async def update_minimax_voice(
-        self,
-        user_id: int,
-        voice_id: Optional[str] = None,
-        file_id: Optional[str] = None,
-        prompt_audio_file_id: Optional[str] = None,
-        prompt_text: Optional[str] = None,
-        model: Optional[str] = None,
-        enabled: Optional[bool] = None
-    ) -> None:
-        """Обновляет настройки Minimax Voice Clone для пользователя"""
-        user = await self.upsert(user_id)
-        minimax_voice = user.voice_settings.minimax_voice
-        
-        if voice_id is not None:
-            # Используем единую функцию очистки (убирает HTML-теги, кавычки, пробелы)
-            from ...utils.minimax_voice import validate_and_clean_voice_id
-            cleaned_voice_id = validate_and_clean_voice_id(voice_id)
-            if cleaned_voice_id:
-                minimax_voice.voice_id = cleaned_voice_id
-            else:
-                # Если не удалось очистить - сохраняем как есть (но с предупреждением)
-                # validate_and_clean_voice_id уже залогировал ошибку
-                minimax_voice.voice_id = voice_id.strip()  # Хотя бы пробелы уберем
-        # file_id и prompt_audio_file_id больше не используются - только voice_id
-        if prompt_text is not None:
-            minimax_voice.prompt_text = prompt_text
-        if model is not None:
-            minimax_voice.model = model
-        if enabled is not None:
-            minimax_voice.enabled = enabled
-        
-        await user.save()

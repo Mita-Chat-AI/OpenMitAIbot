@@ -28,16 +28,8 @@ class VoiceConfig(BaseConfig):
         env_prefix="api_"
     )
 
-    edge_tts: SecretStr | None = Field(default=None)  # Опционально, если используется Minimax Voice
+    edge_tts: SecretStr | None = Field(default=None)
     rvc: SecretStr | None = None
-    # Minimax Voice Clone настройки
-    # Правильный URL: https://api.minimax.io/v1 (не platform.minimax.io!)
-    minimax_voice_base_url: str = Field(default="https://api.minimax.io/v1")
-    minimax_voice_api_key: SecretStr | None = Field(default=None)  # Отдельный ключ для Voice API (если отличается от AI ключа)
-    # Настройки голоса по умолчанию для всех пользователей
-    minimax_voice_id: str | None = Field(default=None)  # Voice ID для автоматического использования (из .env)
-    minimax_voice_file_id: str = Field(default="moss_audio_c58a23ef-d454-11f0-b86f-92cea958fabe")
-    minimax_voice_enabled: bool = Field(default=True)  # Включить Minimax Voice по умолчанию
     voice_mode_enabled: bool = Field(default=True)  # Включить voice_mode по умолчанию для всех
 
 class AiConfig(BaseConfig):
@@ -48,7 +40,7 @@ class AiConfig(BaseConfig):
     model: str
     api_key: SecretStr
     base_url: SecretStr
-    provider: str = Field(default="openai")  # openai, minimax, lmstudio
+    provider: str = Field(default="openai")  # openai, lmstudio
     # Настройки токенов для подписок
     tokens_per_request: int = Field(default=200)  # Среднее количество токенов на запрос
     subscription_weekly_tokens: int = Field(default=2000)  # Токены для недельной подписки

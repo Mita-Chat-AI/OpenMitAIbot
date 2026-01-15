@@ -32,7 +32,7 @@
 ## ✨ Возможности
 
 * Генерация голосовых сообщений
-* Общение с ИИ (поддержка Minimax, OpenAI, LMStudio)
+* Общение с ИИ (поддержка OpenAI, LMStudio)
 * Система подписок с токенами
 * Минимальное время между запросами
 * Добавление описания о себе (для улучшения диалога)
@@ -53,8 +53,6 @@
 | `/setbio <текст>`                     | Добавить описание о себе                   |
 | `/voice <текст>`                      | Генерация голосового сообщения             |
 | `/voice_mode`                         | Включить/выключить Voice Mode              |
-| `/set_minimax_voice`                  | Настроить Minimax Voice Clone              |
-| `/minimax_voice_info`                 | Информация о настройках Minimax Voice      |
 | `/reset`                              | Очистить историю общения с ИИ              |
 
 ---
@@ -70,26 +68,17 @@
 
 ## ⚙ Настройка
 
-### Настройка Minimax Voice Clone
-
-Для использования клонированного голоса через Minimax:
-1. См. подробную инструкцию: [MINIMAX_VOICE_SETUP.md](MINIMAX_VOICE_SETUP.md)
-2. Используйте команду `/set_minimax_voice` для настройки
-3. Ваш `file_id`: `moss_audio_c58a23ef-d454-11f0-b86f-92cea958fabe`
-
-### Настройка Minimax API
+### Настройка AI провайдера
 
 1. Создайте файл `.env` в корне проекта
 2. Установите следующие переменные:
 
 ```env
-AI_PROVIDER=minimax
-AI_MODEL=abab6.5s-chat
-AI_API_KEY=ваш_jwt_токен_minimax
-AI_BASE_URL=https://api.minimax.chat/v1
+AI_PROVIDER=openai  # или lmstudio
+AI_MODEL=название_модели
+AI_API_KEY=ваш_api_ключ
+AI_BASE_URL=url_вашего_api
 ```
-
-Подробная инструкция по настройке Minimax: см. [MINIMAX_SETUP.md](MINIMAX_SETUP.md)
 
 ### Настройка токенов и подписок
 

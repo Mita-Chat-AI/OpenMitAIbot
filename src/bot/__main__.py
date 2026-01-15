@@ -57,7 +57,12 @@ async def main() -> None:
         await shutdown(bot)
 
     try:
-        await dp.start_polling(bot)
+        # Очищаем старые обновления и запускаем polling
+        await dp.start_polling(
+            bot,
+            drop_pending_updates=True,  # Очищаем старые обновления
+            allowed_updates=["message", "callback_query", "chat_member"]  # Только нужные типы обновлений
+        )
     finally:
         await bot.session.close()
 
