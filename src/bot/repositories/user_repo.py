@@ -9,10 +9,15 @@ class UserRepository:
         self,
         user_id: int,
     ) -> User:
+        from ...settings.main import config
+        
         user = await User.find_one(User.user_id == user_id)
 
         if not user:
             user = User(user_id=user_id)
+            # Автоматически включаем voice_mode для нового пользователя
+            if config.voice_config.voice_mode_enabled:
+                user.settings.voice_mode = True
             await user.insert()
 
         return user
@@ -123,3 +128,53 @@ class UserRepository:
             return [{"type": m.type, "content": m.content} for m in user.user_history.messages]
         else:
             return [{}]
+
+    async def update_subscription(
+        self,
+        user_id: int,
+        subscription_type: int,
+        tokens: int,
+        expires_days: int = 7,
+        phone_number: Optional[str] = None
+    ) -> None:
+        """Обновляет подписку пользователя"""
+        from datetime import datetime, timedelta
+        from ...db.models import Subscription
+        
+        user = await self.upsert(user_id)
+        
+        user.settings.subscription.type = subscription_type
+        user.settings.subscription.tokens = tokens
+        user.settings.subscription.expires_at = datetime.now() + timedelta(days=expires_days)
+        user.settings.subscription.created_at = datetime.now()
+        
+        if phone_number:
+            user.settings.subscription.phone_number = phone_number
+        
+        await user.save()
+
+    async def update_phone_number(
+        self,
+        user_id: int,
+        phone_number: str
+    ) -> None:
+        """Обновляет номер телефона пользователя"""
+        user = await self.upsert(user_id)
+        user.settings.subscription.phone_number = phone_number
+        await user.save()
+
+    async def get_subscription_info(
+        self,
+        user_id: int
+    ) -> dict:
+        """Возвращает информацию о подписке пользователя"""
+        user = await self.upsert(user_id)
+        sub = user.settings.subscription
+        
+        return {
+            "type": sub.type,
+            "tokens": sub.tokens,
+            "expires_at": sub.expires_at,
+            "phone_number": sub.phone_number,
+            "min_request_interval": user.settings.min_request_interval
+        }
