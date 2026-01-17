@@ -4,6 +4,7 @@ from loguru import logger
 from agno.agent import Agent
 from agno.models.lmstudio import LMStudio
 from agno.db.mongo import MongoDb
+from agno.media import Image
 
 from ....settings.main import config
 
@@ -152,13 +153,17 @@ class AiService:
     def __init__(self):
         pass
 
+
     async def generate_response(
         self,
         user_id: int,
         session_id: int,
         text: str,
+        image: bytes = None,
         player_prompt: str = None
     ) -> str:
+        
+
         try:
             agent: Agent = create_agent_for_user(
                 user_id=user_id,
@@ -166,21 +171,28 @@ class AiService:
                 player_prompt=player_prompt
             )
 
+            kwargs = {}
+            if image:
+                kwargs["images"] = [Image(content=image)]
+
             response = await asyncio.to_thread(
                 agent.run,
                 text,
                 session_id=session_id,
+                **kwargs
             )
 
-            if not response:
-                logger.warning(f"AI вернул пустой ответ для user_id={user_id}")
-                return None
-                
-            return response
-        except Exception as e:
-            logger.error(f"Ошибка в generate_response для user_id={user_id}: {e}")
-            raise
+            # Достаём реальный текст
+            msg = response.messages[-1].content
 
+            if not response:
+                logger.error(f"AI вернул пустой ответ для user_id={user_id}")
+                return None
+            return msg
+    
+        except Exception as e:
+            logger.exception(f"Ошибка в generate_response для user_id={user_id}: {e}")
+            raise
 
     async def clear_history(
             self,
@@ -192,7 +204,10 @@ class AiService:
             player_prompt=None,
         )
 
-        session = agent.db.get_session(session_id=user_id, session_type="agent")
+        session = agent.db.get_session(
+            session_id=user_id,
+            session_type="agent"
+            )
 
         if not session:
             return False
@@ -204,5 +219,4 @@ class AiService:
         agent.save_session(session)
 
         return True
-
 

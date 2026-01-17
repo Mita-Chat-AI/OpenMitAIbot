@@ -1,11 +1,6 @@
 import html
-import warnings
-from datetime import datetime, timedelta
 from io import BytesIO
 from typing import Optional, Union
-
-# Подавляем предупреждение о ffmpeg/avconv от pydub ДО импорта
-warnings.filterwarnings("ignore", message=".*Couldn't find ffmpeg or avconv.*", category=RuntimeWarning)
 
 import aiohttp
 import numpy as np
@@ -13,7 +8,8 @@ import soundfile as sf
 from aiogram.types.chat_member_updated import ChatMemberUpdated
 from aiogram.types.user import User as TelegramUser
 from aiogram_i18n.managers import BaseManager
-from openai import APIConnectionError
+from aiogram.types import Message
+from aiogram import Bot
 from pedalboard import Pedalboard, Reverb
 
 from ....settings import Config, config
@@ -57,106 +53,75 @@ class UserService(Service):
         self.data = user
         return user
 
-    async def check_tokens_and_time(
-            self,
-            user: User
-    ) -> tuple[bool, Optional[str]]:
-        """
-        Проверяет наличие токенов и минимальное время между запросами.
-        Возвращает (можно_отправить, сообщение_об_ошибке)
-        """
-        now = datetime.now()
-        
-        # Проверка минимального времени между запросами
-        if user.settings.last_request_time:
-            time_diff = (now - user.settings.last_request_time).total_seconds()
-            min_interval = user.settings.min_request_interval
-            
-            if time_diff < min_interval:
-                remaining = min_interval - time_diff
-                return False, f"⏳ Подожди еще {remaining:.1f} секунд перед следующим запросом..."
-        
-        # ПРОВЕРКА ПОДПИСОК ОТКЛЮЧЕНА
-        # Все пользователи могут использовать бота без ограничений
-        
-        # # Проверка подписки и токенов
-        # subscription = user.settings.subscription
-        # 
-        # # Если подписка истекла, сбрасываем её
-        # if subscription.expires_at and subscription.expires_at < now:
-        #     subscription.type = 0
-        #     subscription.tokens = 0
-        #     subscription.expires_at = None
-        #     await user.save()
-        #     return False, "💔 Твоя подписка истекла. Оформи новую подписку, чтобы продолжить общение!"
-        # 
-        # # Если нет активной подписки
-        # if subscription.type == 0 or subscription.tokens <= 0:
-        #     return False, "💎 У тебя нет активной подписки или закончились токены. Оформи подписку, чтобы общаться со мной!"
-        # 
-        # # Проверяем, достаточно ли токенов для запроса
-        # tokens_needed = config.ai_config.tokens_per_request
-        # if subscription.tokens < tokens_needed:
-        #     return False, f"💎 У тебя недостаточно токенов. Нужно {tokens_needed}, осталось {subscription.tokens}."
-        
-        return True, None
-    
-    async def consume_tokens(
-            self,
-            user: User,
-            tokens_used: Optional[int] = None
-    ) -> None:
-        """Списывает токены после запроса (ОТКЛЮЧЕНО)"""
-        # СПИСАНИЕ ТОКЕНОВ ОТКЛЮЧЕНО
-        # Токены больше не списываются, все пользователи могут использовать бота без ограничений
-        
-        # if tokens_used is None:
-        #     tokens_used = config.ai_config.tokens_per_request
-        # 
-        # subscription = user.settings.subscription
-        # subscription.tokens = max(0, subscription.tokens - tokens_used)
-        
-        # Обновляем время последнего запроса
-        user.settings.last_request_time = datetime.now()
-        
-        await user.save()
-        # self.logger.info(f"Списано {tokens_used} токенов у пользователя {user.user_id}. Осталось: {subscription.tokens}")
-
     async def ask_ai(
             self,
             user_id: int,
-            text: str
+            text: str,
+            image: bytes =  None
     ) -> str:
-        try:
-            user = await self.get_data(user_id)
-            
-            # Проверяем токены и время
-            can_proceed, error_msg = await self.check_tokens_and_time(user)
-            if not can_proceed:
-                raise ValueError(error_msg)
+        user = await self.get_data(user_id)
 
-            ai_response = await self.ai_service.generate_response(
-                user_id=user_id,
-                session_id=user_id,
-                text=text,
-                player_prompt=user.settings.player_prompt if user.settings.player_prompt else None
-                )
+        ai_response = await self.ai_service.generate_response(
+            user_id=user_id,
+            session_id=user_id,
+            text=text,
+            player_prompt=user.settings.player_prompt if user.settings.player_prompt else None,
+            image=image
+            )
 
-            if not ai_response or not hasattr(ai_response, 'content'):
-                self.logger.warning(f"AI вернул пустой ответ для пользователя {user_id}")
-                return None
-            
-            # Списываем токены после успешного запроса
-            await self.consume_tokens(user)
-                
-            return ai_response.content
-        except ValueError as e:
-            # Это ошибка проверки токенов/времени - пробрасываем дальше
-            raise
-        except Exception as e:
-            self.logger.error(f"Ошибка при запросе к AI для пользователя {user_id}: {e}")
-            raise
+
+        return ai_response
     
+    async def images(
+            self,
+            message: Message,
+            bot: Bot
+    ) -> tuple[str | None, bytes | None]:
+        try:
+            # Фото
+            if message.photo:
+                file = await bot.download(message.photo[-1].file_id)
+                return message.caption or "Что ты видишь на этом фото? Какая твоя реакция?", file.read()
+
+            # Стикеры
+            if message.sticker:
+                from PIL import Image
+                import io
+                import numpy as np
+                import imageio.v3 as iio
+
+                st = message.sticker
+                raw = await bot.download(st.file_id)
+                buf = raw.read()
+
+                # STATIC WEBP → PNG
+                if not st.is_animated and not st.is_video:
+                    img = Image.open(io.BytesIO(buf))
+                    out = io.BytesIO()
+                    img.save(out, format="PNG")
+                    return message.caption or "Что ты видишь на этом стикере? Какая твоя реакция?", out.getvalue()
+
+                # TGS → unsupported for vision
+                if st.is_animated:
+                    return None, None
+
+                # VIDEO STICKER WEBM → PNG
+                if st.is_video:
+                    try:
+                        frame = next(iio.imiter(buf, plugin="ffmpeg"))
+                    except Exception:
+                        return None, None
+
+                    out = io.BytesIO()
+                    Image.fromarray(frame).save(out, format="PNG")
+                    return message.caption or "Что ты видишь на этом стикере? Какая твоя реакция?", out.getvalue()
+
+            return None, None
+
+        except Exception as e:
+            await message.reply(f"Ошибка изображения: {e}")
+            return None, None
+        
     def get_env(self) -> Config:
         return config
 
@@ -167,13 +132,8 @@ class UserService(Service):
             self, user_id: int,
             text: str
     ) -> bytes:
-        """
-        Генерирует голосовое сообщение.
-        
-        Использует Edge TTS (библиотека или внешний API).
-        """
         return
-        
+
 
     async def apply_voice_effect(
             self,

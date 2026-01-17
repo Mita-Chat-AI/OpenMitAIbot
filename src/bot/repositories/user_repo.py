@@ -1,6 +1,6 @@
 from typing import Optional
-
-from ..db.models import User
+import time
+from ..db.models import User, GroupUserMessage
 from ..exeptions import SelectError
 
 
@@ -9,15 +9,10 @@ class UserRepository:
         self,
         user_id: int,
     ) -> User:
-        from ...settings.main import config
-        
         user = await User.find_one(User.user_id == user_id)
 
         if not user:
             user = User(user_id=user_id)
-            # Автоматически включаем voice_mode для нового пользователя
-            if config.voice_config.voice_mode_enabled:
-                user.settings.voice_mode = True
             await user.insert()
 
         return user
@@ -57,12 +52,11 @@ class UserRepository:
             self,
             user_id: int
     ) -> str:
-        user: User = await self.upsert(
+        user: User = self.upsert(
             user_id=user_id
         )
         if user.settings.player_prompt:
             return user.settings.player_prompt
-        return ""
 
 
     async def update_ban(
@@ -91,7 +85,7 @@ class UserRepository:
         locale: str
     ) -> Optional[User]:
         user = await self.upsert(user_id)
-        user.settings.locale = locale
+        user.locale = locale
         await user.save()
         return user
 
@@ -129,52 +123,34 @@ class UserRepository:
         else:
             return [{}]
 
-    async def update_subscription(
+    async def update_last_bot_message(
+            self,
+            user_id: int,
+            chat_id: int,
+            message_id: int
+        ) -> User:
+            """Сохраняет последний ответ бота для конкретного чата."""
+            user = await self.upsert(user_id)
+
+            if user.messages is None:
+                user.messages = GroupUserMessage()
+
+            user.messages.last_bot_message[str(chat_id)] = message_id
+            await user.save()
+            return user
+
+    async def update_memory_time(
         self,
         user_id: int,
-        subscription_type: int,
-        tokens: int,
-        expires_days: int = 7,
-        phone_number: Optional[str] = None
-    ) -> None:
-        """Обновляет подписку пользователя"""
-        from datetime import datetime, timedelta
-        from ...db.models import Subscription
-        
+        chat_id: int,
+        timestamp: float | None = None
+    ) -> User:
+        """Сохраняет время последнего взаимодействия."""
         user = await self.upsert(user_id)
-        
-        user.settings.subscription.type = subscription_type
-        user.settings.subscription.tokens = tokens
-        user.settings.subscription.expires_at = datetime.now() + timedelta(days=expires_days)
-        user.settings.subscription.created_at = datetime.now()
-        
-        if phone_number:
-            user.settings.subscription.phone_number = phone_number
-        
-        await user.save()
 
-    async def update_phone_number(
-        self,
-        user_id: int,
-        phone_number: str
-    ) -> None:
-        """Обновляет номер телефона пользователя"""
-        user = await self.upsert(user_id)
-        user.settings.subscription.phone_number = phone_number
-        await user.save()
+        if user.messages is None:
+            user.messages = GroupUserMessage()
 
-    async def get_subscription_info(
-        self,
-        user_id: int
-    ) -> dict:
-        """Возвращает информацию о подписке пользователя"""
-        user = await self.upsert(user_id)
-        sub = user.settings.subscription
-        
-        return {
-            "type": sub.type,
-            "tokens": sub.tokens,
-            "expires_at": sub.expires_at,
-            "phone_number": sub.phone_number,
-            "min_request_interval": user.settings.min_request_interval
-        }
+        user.messages.memory_time[str(chat_id)] = timestamp or time.time()
+        await user.save()
+        return user

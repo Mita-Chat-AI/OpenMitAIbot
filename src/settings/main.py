@@ -30,7 +30,7 @@ class VoiceConfig(BaseConfig):
 
     edge_tts: SecretStr | None = Field(default=None)
     rvc: SecretStr | None = None
-    voice_mode_enabled: bool = Field(default=True)  # Включить voice_mode по умолчанию для всех
+    voice_mode_enabled: bool = Field(default=False)  # Включить voice_mode по умолчанию для всех
 
 class AiConfig(BaseConfig):
     model_config = SettingsConfigDict(

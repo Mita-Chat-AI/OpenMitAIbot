@@ -40,7 +40,7 @@ class UserSettings(BaseModel):
     )
     is_blocked: bool = False
     is_history: bool = True
-    voice_mode: bool = True  # По умолчанию включен для всех
+    voice_mode: bool = False
     locale: str = Field(
         default="ru"
     )
@@ -73,6 +73,11 @@ class Statistics(BaseModel):
         return v
 
 
+class GroupUserMessage(BaseModel):
+    memory_time: dict = {}
+    last_bot_message: dict = {}
+
+
 class User(Document):
     user_id: int
     settings: UserSettings = Field(
@@ -84,6 +89,10 @@ class User(Document):
     statistics: Statistics = Field(
         default_factory=Statistics
     )
+    messages: GroupUserMessage = Field(
+        default_factory=GroupUserMessage
+    ) 
+    
 
     class Settings:
         name = "users"
