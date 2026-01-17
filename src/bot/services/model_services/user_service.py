@@ -172,83 +172,8 @@ class UserService(Service):
         
         Использует Edge TTS (библиотека или внешний API).
         """
-        self.logger.info(f"Попытка записи голосового сообщения для {user_id} : {text}")
-
-        user = await self.get_data(search_argument=user_id)
+        return
         
-        # Используем Edge TTS
-        # Получаем настройки голоса
-        voice_person = user.voice_settings.edge_tts.person or "CrazyMita"
-        voice_rate = user.voice_settings.edge_tts.rate or "+10%"
-        voice_pitch_int = user.voice_settings.edge_tts.pith or 8
-        
-        # Конвертируем настройки в формат Edge TTS
-        voice = map_person_to_voice(voice_person)
-        rate = voice_rate
-        pitch = map_pitch_int_to_hz(voice_pitch_int)
-        
-        self.logger.debug(f"Голос: {voice}, rate: {rate}, pitch: {pitch}")
-
-        try:
-            voice_bytes = await generate_edge_tts(
-                text=text,
-                voice=voice,
-                rate=rate,
-                pitch=pitch
-            )
-            if voice_bytes:
-                self.logger.success(f"✅ Edge TTS (библиотека): {len(voice_bytes)} байт")
-        except Exception as e:
-            self.logger.warning(f"Edge TTS библиотека недоступна: {e}, пробуем API...")
-            voice_bytes = None
-        
-        # Fallback: пробуем внешний API если библиотека не работает
-        if not voice_bytes:
-            edge_tts_secret = self.config.voice_config.edge_tts
-            edge_tts_url = edge_tts_secret.get_secret_value() if edge_tts_secret else None
-            if edge_tts_url and edge_tts_url != "" and edge_tts_url != "your_edge_tts_api_url":
-                try:
-                    self.logger.info(f"Пробуем Edge TTS через внешний API: {edge_tts_url}")
-                    async with aiohttp.ClientSession() as session:
-                        async with session.post(
-                            url=edge_tts_url,
-                            json={
-                                "text": text,
-                                "person": voice_person,
-                                "rate": rate,
-                                "pith": voice_pitch_int
-                            },
-                            headers={
-                                'Content-type': 'application/json'
-                            },
-                            timeout=aiohttp.ClientTimeout(total=10)
-                        ) as response:
-
-                            if response.status != 200:
-                                error_text = await response.text()
-                                self.logger.warning(f"Edge TTS API вернул ошибку {response.status}: {error_text}")
-                                voice_bytes = None
-                            else:
-                                voice_bytes = await response.read()
-                                if voice_bytes:
-                                    self.logger.success(f"✅ Edge TTS (API): {len(voice_bytes)} байт")
-                                else:
-                                    self.logger.warning("Edge TTS API вернул пустой ответ")
-                                    voice_bytes = None
-                except aiohttp.ClientError as e:
-                    self.logger.warning(f"Не удалось подключиться к Edge TTS API ({edge_tts_url}): {e}")
-                    voice_bytes = None
-                except Exception as e:
-                    self.logger.warning(f"Ошибка при обращении к Edge TTS API: {e}")
-                    voice_bytes = None
-            else:
-                self.logger.debug("Edge TTS API URL не указан или пустой, пропускаем")
-        
-        if not voice_bytes:
-            self.logger.error("Не удалось получить аудио от Edge TTS")
-            return None
-        
-        return await self.apply_voice_effect(voice_bytes)
 
     async def apply_voice_effect(
             self,
