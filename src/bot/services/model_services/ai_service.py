@@ -81,39 +81,41 @@ def create_agent_for_user(
         session_id: int,
         player_prompt
 ) -> Agent:
-
+    """
+    Создает Agent для пользователя с настройками из конфигурации.
+    
+    Настраивает прокси через переменные окружения, если указан в конфиге.
+    Использует LMStudio для работы с OpenAI-совместимыми API.
+    """
     db = MongoDb(
         db_name=config.db.name,
         db_url=config.db.url
     )
 
-    # Проверяем наличие прокси в переменных окружения
-    proxy_url = os.getenv("HTTPS_PROXY") or os.getenv("HTTP_PROXY")
-    
-    if proxy_url:
-        logger.info(f"🔒 Используется прокси: {proxy_url}")
+    if config.ai_config.proxy_url:
+        proxy_url = config.ai_config.proxy_url.get_secret_value()
+        os.environ["HTTPS_PROXY"] = proxy_url
+        os.environ["HTTP_PROXY"] = proxy_url
+        logger.info(f"Используется прокси: {proxy_url}")
     else:
-        logger.warning("⚠️ Прокси не настроен - запросы идут напрямую")
+        os.environ.pop("HTTPS_PROXY", None)
+        os.environ.pop("HTTP_PROXY", None)
+        logger.warning("Прокси не настроен - запросы идут напрямую")
 
-    # Выбираем модель в зависимости от провайдера
     provider = config.ai_config.provider.lower()
     api_key = config.ai_config.api_key.get_secret_value()
     base_url = config.ai_config.base_url.get_secret_value()
     model_name = config.ai_config.model
     
-    # LMStudio поддерживает OpenAI-совместимые API
-    # Используем его для всех провайдеров
     if provider == "openai":
-        # OpenAI API через LMStudio (OpenAI-совместимый)
-        logger.info(f"🔧 Используется OpenAI API: {base_url}, модель: {model_name}")
+        logger.info(f"Используется OpenAI API: {base_url}, модель: {model_name}")
         model = LMStudio(
             id=model_name,
             api_key=api_key,
             base_url=base_url
         )
     else:
-        # По умолчанию LMStudio
-        logger.info(f"🔧 Используется LMStudio API: {base_url}, модель: {model_name}")
+        logger.info(f"Используется LMStudio API: {base_url}, модель: {model_name}")
         model = LMStudio(
             id=model_name,
             api_key=api_key,
@@ -134,13 +136,11 @@ def create_agent_for_user(
 
         db=db,
 
-        add_history_to_context=True,         # последние N сообщений
-        num_history_runs=50,                  # детали последних сообщений
-        
-
-        enable_user_memories=False,          # отключено, чтобы не было багов с memory tool
-        enable_session_summaries=True,       # включаем суммирование
-        add_session_summary_to_context=True, # подмешивать summary в контекст
+        add_history_to_context=True,
+        num_history_runs=50,
+        enable_user_memories=False,
+        enable_session_summaries=True,
+        add_session_summary_to_context=True,
 
         add_datetime_to_context=False,
         additional_context={

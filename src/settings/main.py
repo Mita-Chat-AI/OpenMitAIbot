@@ -30,7 +30,7 @@ class VoiceConfig(BaseConfig):
 
     edge_tts: SecretStr | None = Field(default=None)
     rvc: SecretStr | None = None
-    voice_mode_enabled: bool = Field(default=True)  # Включить voice_mode по умолчанию для всех
+    voice_mode_enabled: bool = Field(default=False)
 
 class AiConfig(BaseConfig):
     model_config = SettingsConfigDict(
@@ -40,11 +40,11 @@ class AiConfig(BaseConfig):
     model: str
     api_key: SecretStr
     base_url: SecretStr
-    provider: str = Field(default="openai")  # openai, lmstudio
-    # Настройки токенов для подписок
-    tokens_per_request: int = Field(default=200)  # Среднее количество токенов на запрос
-    subscription_weekly_tokens: int = Field(default=2000)  # Токены для недельной подписки
-    subscription_monthly_tokens: int = Field(default=10000)  # Токены для месячной подписки
+    provider: str = Field(default="openai")
+    proxy_url: SecretStr | None = Field(default=None)
+    tokens_per_request: int = Field(default=200)
+    subscription_weekly_tokens: int = Field(default=2000)
+    subscription_monthly_tokens: int = Field(default=10000)
 
 
 class DbConfig(BaseConfig):

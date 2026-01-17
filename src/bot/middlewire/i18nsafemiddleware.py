@@ -15,8 +15,8 @@ class I18nSafeMiddleware(BaseMiddleware):
         try:
             return await handler(event, data)
         except KeyNotFoundError as e:
-            locale = {data.get("i18n").locale}
-            logger.error(f"Неудача i18n | key: {e} | locale: {locale if locale else 'unklown'}")
+            locale = data.get("i18n").locale if data.get("i18n") else "unknown"
+            logger.error(f"Ошибка i18n: ключ {e} не найден для локали {locale}")
             
             chat_id = None
             if hasattr(event, "message"):
@@ -27,7 +27,7 @@ class I18nSafeMiddleware(BaseMiddleware):
             if chat_id is not None:
                 await event.bot.send_message(
                     chat_id=chat_id,
-                    text=f"translate {e} sorry..."
+                    text=f"Ошибка перевода ключа: {e}. Извините за неудобства."
                 )
                 return
             

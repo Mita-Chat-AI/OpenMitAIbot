@@ -31,7 +31,7 @@ async def load_routers() -> List[Router]:
             found = [obj for obj in module.__dict__.values() if isinstance(obj, Router)]
             if found:
                 routers.extend(found)
-                logger.success(f"Загружено {len(found)} роутеров из {name}")
+                logger.info(f"Загружено {len(found)} роутеров из {name}")
             else:
                 logger.warning(f"В модуле {name} роутеров не найдено")
         except Exception as e:

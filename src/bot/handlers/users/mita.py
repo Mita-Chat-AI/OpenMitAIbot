@@ -28,7 +28,7 @@ async def mita_handler(
     ]
 ) -> Optional[Message] | None:
     
-    logger.info(f"📩 Получено сообщение от {message.from_user.id}: {message.text}")
+    logger.info(f"Получено сообщение от {message.from_user.id}: {message.text}")
 
     await bot.send_chat_action(
         chat_id=message.chat.id,
@@ -36,14 +36,13 @@ async def mita_handler(
     )
 
     try:
-        logger.info(f"🤖 Отправляю запрос к AI...")
+        logger.info("Отправляю запрос к AI...")
         msg = await user_service.ask_ai(
             user_id=message.from_user.id,
             text=message.text
         )
-        logger.info(f"✅ Получен ответ от AI: {msg[:50] if msg else 'None'}...")
+        logger.info(f"Получен ответ от AI: {msg[:50] if msg else 'None'}...")
     except ValueError as e:
-        # Ошибка проверки токенов/времени
         logger.warning(f"Ошибка проверки токенов/времени: {e}")
         await message.reply(text=str(e))
         return None
@@ -76,7 +75,6 @@ async def mita_handler(
         search_argument=message.from_user.id
     )
     
-    # Автоматически включаем voice_mode если настроено в конфиге
     from ....settings.main import config
     if config.voice_config.voice_mode_enabled and not user.settings.voice_mode:
         user.settings.voice_mode = True
@@ -105,10 +103,10 @@ async def mita_handler(
             result = await message.reply_voice(
                 voice=BufferedInputFile(
                     file=voice_buffer,
-                    filename='voice.ogg'  # Telegram предпочитает OGG
+                    filename='voice.ogg'
                 )
             )
-            logger.success("Голосовое сообщение отправлено успешно")
+            logger.info("Голосовое сообщение отправлено успешно")
             return result
         except Exception as e:
             logger.error(f"Ошибка при отправке голосового сообщения: {e}")

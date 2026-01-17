@@ -9,6 +9,7 @@ from .containers import Container
 from .db.connection import init_db
 from .handlers import load_routers
 from .middlewire.i18nsafemiddleware import I18nSafeMiddleware
+from .services.model_services.user_service import UserService
 from .utils.shutdown import shutdown
 from .utils.startup import startup
 
@@ -41,13 +42,10 @@ async def main() -> None:
 
     service = container.user_service()
     i18n_middleware = I18nMiddleware(
-        
-        manager=service.UserManager(service.user_repository),  # передаём self-сервис
+        manager=UserService.UserManager(service.user_repository),
         core=FluentRuntimeCore(path="src/bot/locales/{locale}/LC_MESSAGES"),
         default_locale="ru"
     )
-
-
     i18n_middleware.setup(dispatcher=dp)
 
     dp.update.outer_middleware.register(I18nSafeMiddleware())
@@ -57,11 +55,10 @@ async def main() -> None:
         await shutdown(bot)
 
     try:
-        # Очищаем старые обновления и запускаем polling
         await dp.start_polling(
             bot,
-            drop_pending_updates=True,  # Очищаем старые обновления
-            allowed_updates=["message", "callback_query", "chat_member"]  # Только нужные типы обновлений
+            drop_pending_updates=True,
+            allowed_updates=["message", "callback_query", "chat_member"]
         )
     finally:
         await bot.session.close()

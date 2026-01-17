@@ -17,13 +17,13 @@ async def init_db() -> None:
         
         # Проверяем подключение
         await client.admin.command('ping')
-        logger.success(f"✅ Подключение к MongoDB успешно: {config.db.url}")
+        logger.info(f"Подключение к MongoDB успешно: {config.db.url}")
         
         await init_beanie(
             database=client[config.db.name],
             document_models=[User]
         )
-        logger.success(f"✅ База данных инициализирована: {config.db.name}")
+        logger.info(f"База данных инициализирована: {config.db.name}")
         
     except ServerSelectionTimeoutError as e:
         logger.error(
@@ -48,5 +48,5 @@ async def init_db() -> None:
         logger.error(f"Техническая информация: {e}")
         raise
     except Exception as e:
-        logger.error(f"❌ Ошибка при подключении к MongoDB: {e}")
+        logger.error(f"Ошибка при подключении к MongoDB: {e}")
         raise

@@ -12,12 +12,7 @@ class Container(containers.DeclarativeContainer):
 
     user_repo = providers.Factory(UserRepository)
 
-    ai_service = providers.Factory(
-        AiService,
-        # model=config.ai_config.model,
-        # api_key=config.ai_config.api_key.get_secret_value(),
-        # base_url=config.ai_config.base_url.get_secret_value()
-    )
+    ai_service = providers.Factory(AiService)
 
     user_service = providers.Factory(
         UserService,

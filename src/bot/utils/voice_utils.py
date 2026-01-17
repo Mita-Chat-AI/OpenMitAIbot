@@ -91,7 +91,7 @@ async def generate_edge_tts(
             logger.error("Edge TTS вернул пустой аудио буфер")
             return None
         
-        logger.success(f"Edge TTS: сгенерировано {len(result)} байт для голоса {voice}")
+        logger.info(f"Edge TTS: сгенерировано {len(result)} байт для голоса {voice}")
         return result
         
     except Exception as e:
