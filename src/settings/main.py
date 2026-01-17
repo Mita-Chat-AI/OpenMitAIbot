@@ -41,10 +41,12 @@ class AiConfig(BaseConfig):
     api_key: SecretStr
     base_url: SecretStr
     provider: str = Field(default="openai")  # openai, lmstudio
+    https_proxy: SecretStr
+    http_proxy: SecretStr
     # Настройки токенов для подписок
-    tokens_per_request: int = Field(default=200)  # Среднее количество токенов на запрос
-    subscription_weekly_tokens: int = Field(default=2000)  # Токены для недельной подписки
-    subscription_monthly_tokens: int = Field(default=10000)  # Токены для месячной подписки
+    tokens_per_request: int = Field(default=200) 
+    subscription_weekly_tokens: int = Field(default=2000) 
+    subscription_monthly_tokens: int = Field(default=10000)
 
 
 class DbConfig(BaseConfig):
