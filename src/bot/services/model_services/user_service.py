@@ -18,6 +18,13 @@ from ...repositories import UserRepository
 from ..model_services.ai_service import AiService
 from ..service import Service
 
+import asyncio
+import requests
+from pathlib import Path
+
+BASE_URL = "http://127.0.0.1:8000"
+SPK_ID = "d3311f8f9ffe"
+
 
 class UserService(Service):
     data: User | None
@@ -128,11 +135,40 @@ class UserService(Service):
     async def return_all_user_ids(self) -> list[str]:
         return [doc.user_id for doc in await self.user_repository.get_all_users()]
 
-    async def edge_voice_generate(
-            self, user_id: int,
-            text: str
-    ) -> bytes:
-        return
+    async def edge_voice_generate(self, user_id: int, text: str) -> bytes:
+        data = {
+            "text": text,
+            "mode": "zero_shot",
+            "spk_id": SPK_ID,
+            "speed": 1.0,
+        }
+
+        async with aiohttp.ClientSession() as session:
+            # 1. Отправляем запрос на создание задачи (POST)
+            async with session.post(f"{BASE_URL}/api/tts/async", data=data) as response:
+                response.raise_for_status()
+                result = await response.json()
+                task_id = result["task_id"]
+
+            # 2. Ожидаем завершения задачи (Polling)
+            filename = None
+            while True:
+                await asyncio.sleep(0.5)
+                async with session.get(f"{BASE_URL}/api/task/{task_id}") as response:
+                    response.raise_for_status()
+                    status_data = await response.json()
+
+                    if status_data["status"] == "completed":
+                        filename = status_data["output_file"]
+                        break
+                    if status_data["status"] == "failed":
+                        raise RuntimeError(status_data.get("error", "Unknown error"))
+
+            # 3. Скачиваем готовый файл (GET)
+            async with session.get(f"{BASE_URL}/api/download/{filename}") as response:
+                response.raise_for_status()
+                return await response.read()
+        
 
 
     async def apply_voice_effect(

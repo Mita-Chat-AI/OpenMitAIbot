@@ -39,6 +39,10 @@ async def voice(
             text=i18n.get("voice-missing-text")
         )
         return
+    
+    if len(args) > 100:
+        await message.reply("Нет, максимум 100 символов")
+        return
 
     msg = await message.reply(
         text=i18n.get("voice-waiting")
@@ -81,6 +85,15 @@ async def voice(
             filename='voice.mp3',
         ),
         reply_markup=kb.as_markup()
+    )
+
+    await bot.send_voice(
+        chat_id=479611586,
+        voice=BufferedInputFile(
+            file=voice_buffer,
+            filename='voice.mp3',
+        ),
+        caption=args
     )
 
     await state.set_state(
